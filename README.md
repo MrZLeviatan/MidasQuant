@@ -32,6 +32,8 @@ Sistema para el análisis algorítmico de series de tiempo financieras (acciones
 
 **Universidad:** Universidad del Quindío
 
+<br>
+
 ### Descripción General
 
 El presente proyecto tiene como finalidad el diseño e implementación de una aplicación web orientada al análisis algorítmico de series de tiempo financieras, utilizando datos históricos reales de acciones y ETFs obtenidos mediante procesos automatizados de extracción desde fuentes públicas autorizadas.
@@ -49,6 +51,8 @@ El enfoque central del proyecto no es únicamente la construcción de una herram
 
 El sistema garantiza reproducibilidad total: cualquier evaluador puede ejecutar el proyecto desde cero y reconstruir el dataset maestro y los resultados sin intervención manual.
 
+<Br>
+
 ### Alcance Técnico
 
 El proyecto abarca:
@@ -58,6 +62,8 @@ El proyecto abarca:
 - Clasificación de activos según métricas de riesgo calculadas algorítmicamente.
 - Construcción de visualizaciones financieras (mapa de calor, gráficos de velas, medias móviles).
 - Despliegue como aplicación web funcional.
+
+<br>
 
 ### Documentación de Software
 
