@@ -17,6 +17,7 @@ Sistema para el análisis algorítmico de series de tiempo financieras (acciones
   - [Descripción General](#descripción-general)
   - [Alcance Técnico](#alcance-técnico)
   - [Documentación de Software](#documentación-de-software)
+- [](#)
 
 <Br>
 
@@ -83,3 +84,7 @@ Enlace a la documentación completa:
 [Documentación Notion]()
 
 El presente repositorio contiene la implementación técnica del sistema y la información necesaria para su ejecución y validación.
+
+<br>
+
+##
