@@ -17,7 +17,13 @@ Sistema para el análisis algorítmico de series de tiempo financieras (acciones
   - [Descripción General](#descripción-general)
   - [Alcance Técnico](#alcance-técnico)
   - [Documentación de Software](#documentación-de-software)
-- [](#)
+- [Requisitos Software](#requisitos-software)
+- [Instalación](#instalación)
+  - [1. Clonar el Repositorio](#1-clonar-el-repositorio)
+  - [2. Verificar la versión de Python](#2-verificar-la-versión-de-python)
+  - [3. Crear un entorno virtual](#3-crear-un-entorno-virtual)
+  - [4. Instalar dependencias del proyecto](#4-instalar-dependencias-del-proyecto)
+  - [5. Ejecutar la aplicación web](#5-ejecutar-la-aplicación-web)
 
 <Br>
 
@@ -87,4 +93,111 @@ El presente repositorio contiene la implementación técnica del sistema y la in
 
 <br>
 
-##
+---
+
+## Requisitos Software
+
+- Python 3.11+
+- Gestor de dependencias (pip)
+- Librerías estándar para:
+  - Solicitudes HTTP
+  - Procesamiento de JSON/CSV
+  - Manipulación de estructuras de datos
+  - Visualización financiera
+  - Generación de reportes PDF
+- Streamlit para la interfaz web
+
+<br>
+
+---
+
+## Instalación
+
+Esta sección describe el proceso necesario para configurar el entorno de ejecución del proyecto y desplegar la aplicación web localmente. El sistema está desarrollado en Python y utiliza Streamlit como framework para la construcción del dashboard interactivo.
+
+#### 1. Clonar el Repositorio
+
+Primero, se debe clonar el repositorio del proyecto desde el sistema de control de versiones.
+
+```bash
+git clone https://github.com/MrZLeviatan/MidasQuant.git
+cd MidasQuant
+```
+
+Esto descargará el código fuente completo del proyecto en el entorno local.
+
+<br>
+
+#### 2. Verificar la versión de Python
+
+El proyecto requiere Python 3.11+. Para verificar la versión instalada en el sistema, ejecutar:
+
+```bash
+python --version
+```
+
+o
+
+```bash
+python3 --version
+```
+
+Si la versión instalada es inferior, se recomienda actualizar Python antes de continuar con la instalación.
+
+<br>
+
+#### 3. Crear un entorno virtual
+
+Para aislar las dependencias del proyecto y evitar conflictos con otras librerías del sistema, se recomienda crear un entorno virtual.
+
+```bash
+python -m venv venv
+```
+
+Activar el entorno virtual:
+
+En Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+En Linux / macOs
+
+```bash
+source venv/bin/activate
+```
+
+<br>
+
+#### 4. Instalar dependencias del proyecto
+
+Una vez activado el entorno virtual, se deben instalar las librerías necesarias utilizando el archivo `requirements.txt`.
+
+```bash
+pip install -r requirements.txt
+```
+
+Este archivo contiene todas las dependencias requeridas para:
+
+- Procesamiento de datos
+- Solicitudes HTTP a APIs públicas
+- Visualización de datos financieros
+- Construcción de la interfaz web
+- Generación de reportes en PDF
+
+<br>
+
+#### 5. Ejecutar la aplicación web
+
+Se puede iniciar la aplicación web basada en Streamlit.
+
+```bash
+streamlit run app/main.py
+```
+
+Después de ejecutar este comando, la aplicación estará disponible en el navegador en una dirección similar a:
+
+```
+http://localhost:8501
+```
