@@ -1,0 +1,101 @@
+# Este es el nombre de nuestro pipeline. Se verás en la pestaña "Actions" de GitHub.
+name: CI (Integración Continua) Pipeline - MidasQuant
+
+on:
+  # Trigger 1: Push a ramas de desarrollo
+  # --------------------------------------------------------
+  # Este evento ejecuta el workflow cada vez que se realiza un push a cualquier rama EXCEPTO la rama principal.
+  # El objetivo es detectar errores tempranos durante el desarrollo antes de que los cambios lleguen a un Pull Request.
+  push:
+    branches-ignore:
+      - main
+
+  # Trigger 2: Pull Request hacia la rama principal
+  # --------------------------------------------------------
+  # Este evento ejecuta el workflow cuando se crea o se actualiza un Pull Request cuyo destino es la rama main.
+  # El objetivo es validar que el código cumple con las pruebas y reglas del proyecto antes de integrarse a la rama principal.
+  # Esto permite aplicar políticas de protección de rama (branch protection rules) donde el CI debe aprobarse antes de permitir el merge.
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout del repositorio
+      # ----------------------------------------------------
+      # Clona el repositorio en el runner donde se ejecuta el workflow.
+      #
+      # Dependiendo del evento que activó el workflow:
+      #   - push: obtiene el commit exacto que fue enviado.
+      #   - pull_request: obtiene el commit temporal que representa la integración del PR con la rama base.
+      # Esto permite verificar si el código funcionará correctamente al integrarse con la rama principal.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configuración del entorno de ejecución:
+
+      # Configuración del entorno Python
+      # ----------------------------------------------------------
+      # Configura la versión de Python requerida por el proyecto MidasQuant. Se define Python 3.11+ como mínimo para garantizar compatibilidad con las librerías utilizadas.
+      #
+      # Además se habilita el sistema de cache de dependencias para pip, lo que reduce significativamente el tiempo de ejecución del CI en ejecuciones posteriores.
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Instalación de dependencias del proyecto:
+
+      # Creación del entorno virtual venv (para replicar el entorno local)
+      # ----------------------------------------------------------
+      # Se crea un entorno virtual utilizando venv para aislar las dependencias del proyecto.
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+
+      # Activación del entorno virtual
+      # ----------------------------------------------------------
+      # Se activa el entorno virtual creado previamente.
+      # Esto permite que los paquetes instalados por pip queden contenidos dentro del entorno aislado.
+      - name: Activate virtual environment
+        run: |
+          source venv/bin/activate
+
+      # Instalación de dependencias del proyecto
+      # ----------------------------------------------------------
+      # Instala todas las dependencias necesarias del proyecto definidas en el archivo requirements.txt.
+      # Se utiliza pip dentro del entorno virtual creado.
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Análisis estático de código:
+
+      # Instalación de herramientas de linting
+      # ----------------------------------------------------------
+      # Instala las herramientas utilizadas para el análisis estático del código Python.
+      #
+      # Flake8 permite detectar:
+      # - errores de sintaxis
+      # - variables no utilizadas
+      # - incumplimientos del estilo PEP8
+      - name: Install linting tools
+        run: |
+          source venv/bin/activate
+          pip install flake8
+
+      # Ejecución del análisis estático con Flake8
+      # ----------------------------------------------------------
+      # Ejecuta el análisis estático del código utilizando Flake8.
+      #
+      # Si se detectan errores críticos o violaciones de estilo, el comando retorna un código de error y el pipeline de CI se detiene automáticamente.
+      - name: Run static analysis (Flake8)
+        run: |
+          source venv/bin/activate
+          flake8 .
