@@ -20,7 +20,7 @@ on:
       - main
 
 jobs:
-  Integración Continua:
+  continuous integration:
     runs-on: ubuntu-latest
 
     steps:
