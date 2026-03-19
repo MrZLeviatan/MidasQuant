@@ -13,6 +13,8 @@ exclude =
 max-line-length = 88
 
 # Reglas ignoradas
+# conflicto común con Black (E203)
+# salto de línea en operadores (W503)
 ignore =
-    E203,  # conflicto común con Black
-    W503   # salto de línea en operadores
+    E203, 
+    W503   
