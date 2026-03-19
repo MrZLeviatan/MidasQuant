@@ -1,0 +1,18 @@
+# Define reglas de análisis estático para el código Python.
+[flake8]
+
+# Carpetas a excluir del análisis
+exclude =
+    venv,
+    __pycache__,
+    .git,
+    build,
+    dist
+
+# Longitud máxima de línea (compatible con Black)
+max-line-length = 88
+
+# Reglas ignoradas
+ignore =
+    E203,  # conflicto común con Black
+    W503   # salto de línea en operadores

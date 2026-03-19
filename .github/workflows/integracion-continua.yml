@@ -19,6 +19,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   continuous_integration:
     runs-on: ubuntu-latest
@@ -36,7 +39,6 @@ jobs:
         uses: actions/checkout@v4
 
       # Configuración del entorno de ejecución:
-
       # Configuración del entorno Python
       # ----------------------------------------------------------
       # Configura la versión de Python requerida por el proyecto MidasQuant. Se define Python 3.11+ como mínimo para garantizar compatibilidad con las librerías utilizadas.
@@ -54,16 +56,7 @@ jobs:
       # ----------------------------------------------------------
       # Se crea un entorno virtual utilizando venv para aislar las dependencias del proyecto.
       - name: Create virtual environment
-        run: |
-          python -m venv venv
-
-      # Activación del entorno virtual
-      # ----------------------------------------------------------
-      # Se activa el entorno virtual creado previamente.
-      # Esto permite que los paquetes instalados por pip queden contenidos dentro del entorno aislado.
-      - name: Activate virtual environment
-        run: |
-          source venv/bin/activate
+        run: python -m venv venv
 
       # Instalación de dependencias del proyecto
       # ----------------------------------------------------------
@@ -71,9 +64,8 @@ jobs:
       # Se utiliza pip dentro del entorno virtual creado.
       - name: Install dependencies
         run: |
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          venv/bin/pip install --upgrade pip
+          venv/bin/pip install -r requirements.txt
 
       # Análisis estático de código:
 
@@ -87,8 +79,7 @@ jobs:
       # - incumplimientos del estilo PEP8
       - name: Install linting tools
         run: |
-          source venv/bin/activate
-          pip install flake8
+          run: venv/bin/pip install flake8
 
       # Ejecución del análisis estático con Flake8
       # ----------------------------------------------------------
@@ -97,5 +88,4 @@ jobs:
       # Si se detectan errores críticos o violaciones de estilo, el comando retorna un código de error y el pipeline de CI se detiene automáticamente.
       - name: Run static analysis (Flake8)
         run: |
-          source venv/bin/activate
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          venv/bin/flake8 .
