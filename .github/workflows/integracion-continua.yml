@@ -81,7 +81,7 @@ jobs:
       # - incumplimientos del estilo PEP8
       - name: Install linting tools
         run: |
-          run: venv/bin/pip install flake8
+          venv/bin/pip install flake8
 
       # Ejecución del análisis estático con Flake8
       # ----------------------------------------------------------
