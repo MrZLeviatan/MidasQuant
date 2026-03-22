@@ -5,6 +5,8 @@ Responsabilidades:
 - Garantizar consistencia en identificadores de activos
 """
 
+from app.exceptions import TickerInvalidoError
+
 
 # Recibe una cadena de texto, la procesa y devuelve una lista de tickers normalizados.
 def normalizar_tickers(tickers_input: str) -> list[str]:
@@ -50,7 +52,7 @@ def normalizar_tickers(tickers_input: str) -> list[str]:
 
 
 # Recibe un ticker y verifica si cumple con el formato esperado.
-def validar_ticker_formato(ticker: str) -> bool:
+def validar_ticker_formato(ticker: str) -> None:
     """
     Valida el formato básico de un ticker.
 
@@ -63,14 +65,15 @@ def validar_ticker_formato(ticker: str) -> bool:
 
     # Validar que el ticker no esté vacío
     if not ticker:
-        return False
+        raise TickerInvalidoError(ticker=ticker, motivo="Ticker vacío")
 
     # Validar que el ticker solo contenga caracteres alfanuméricos
     if not ticker.isalnum():
-        return False
+        raise TickerInvalidoError(ticker=ticker,
+                                  motivo="Contiene caracteres no alfanuméricos")
 
     # Validar la longitud del ticker
     if not (1 <= len(ticker) <= 10):
-        return False
+        raise TickerInvalidoError(ticker=ticker, motivo="Longitud de ticker inválida")
 
     return True

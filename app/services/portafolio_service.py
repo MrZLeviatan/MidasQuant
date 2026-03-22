@@ -1,0 +1,147 @@
+"""
+Responsabilidades:
+- Procesar entrada del usuario (tickers y fechas)
+- Validar reglas de negocio (mínimo activos, horizonte temporal)
+- Gestionar la persistencia en base de datos
+- Preparar la configuración base para el proceso ETL
+"""
+
+# Sesión de base de datos
+from app.database.connection import SessionLocal
+
+# Excepciones específicas del dominio
+from app.exceptions import MinimoActivosError
+
+# Llamada a los modelos ORM
+from app.database.models import (
+    Activo,
+    Portafolio,
+    PortafolioActivo,
+    ConfiguracionAnalisis,
+)
+
+# Llamada a utilidades de validación y normalización
+from app.utils.text_utils import normalizar_tickers, validar_ticker_formato
+from app.utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
+
+# Librerías estándar
+from datetime import date
+
+
+# Función principal del servicio para crear un portafolio completo
+def crear_portafolio_completo(
+    nombre_portafolio: str,
+    tickers_input: str,
+    fecha_inicio: date,
+    fecha_fin: date,
+    db=None
+):
+    """
+    Crea un portafolio completo con sus activos y configuración de análisis.
+
+    Complejidad: O(n)
+    """
+
+    # 1. NORMALIZACIÓN DE TICKERS: Convierte el string en lista limpia
+    tickers = normalizar_tickers(tickers_input)
+
+    # 2. VALIDACIONES DE NEGOCIO
+    # Validar que haya al menos 20 activos
+    if len(tickers) < 20:
+        raise MinimoActivosError(minimo=20, actual=len(tickers))
+
+    # Validar formato de cada ticker
+    for ticker in tickers:
+        validar_ticker_formato(ticker)
+
+    # Validar fechas (orden correcto)
+    validar_rango_fechas(fecha_inicio, fecha_fin)
+
+    # Validar horizonte mínimo de 5 años
+    validar_horizonte_minimo(fecha_inicio, fecha_fin, min_anios=5)
+
+    # Crear sesión de base de datos transaccional
+    # Si no se proporciona una sesión, se crea una nueva
+    if db is None:
+        db = SessionLocal()
+
+    # 3. OBTENER O CREAR ACTIVOS
+    try:
+        # Lista para almacenar los objetos Activo que se usarán en el portafolio
+        activos_db = []
+
+        # Para cada ticker, buscar o crear el activo correspondiente
+        for ticker in tickers:
+
+            # Buscar si el activo ya existe en la base de datos
+            activo = db.query(Activo).filter(Activo.ticker == ticker).first()
+
+            # Si no existe, se crea uno nuevo con información mínima
+            # (Se completa la información luego en ETL)
+            if not activo:
+                activo = Activo(
+                    ticker=ticker,
+                    nombre=None,
+                    tipo_activo=None,
+                    mercado=None
+                )
+                # Agregar el nuevo activo a la sesión pero no hacer commit aún
+                db.add(activo)
+                db.flush()  # Permite obtener el ID sin hacer commit
+
+            # Agregar a la lista de activos para el portafolio
+            activos_db.append(activo)
+
+        # 4. CREAR PORTAFOLIO
+        portafolio = Portafolio(
+            nombre=nombre_portafolio,
+            fecha_creacion=date.today()
+        )
+        # Agregar el portafolio a la sesión pero no hacer commit aún
+        db.add(portafolio)
+        db.flush()  # Obtener ID del portafolio sin hacer commit
+
+        # 5. CREAR RELACIONES ACTIVO-PORTAFOLIO
+        # Para cada activo, crear una relación con el portafolio
+        for activo in activos_db:
+            relacion = PortafolioActivo(
+                portafolio_id=portafolio.id_portafolio,
+                activo_id=activo.id_activo
+            )
+            # Agregar la relación a la sesión pero no hacer commit aún
+            db.add(relacion)
+
+        # 6. CREAR CONFIGURACIÓN DE ANÁLISIS
+        # Esta configuración se usará luego para el proceso ETL, análisis y benchmarking
+        configuracion = ConfiguracionAnalisis(
+            portafolio_id=portafolio.id_portafolio,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin
+        )
+        # Agregar la configuración a la sesión pero no hacer commit aún
+        db.add(configuracion)
+
+        # 7. CONFIRMAR TRANSACCIÓN
+        # Si todo ha ido bien hasta aquí, se confirma la transacción con un commit a BD
+        db.commit()
+
+        # 8. RESPUESTA DEL SERVICIO
+        # Preparar la respuesta con la información del portafolio creado
+        return {
+            "portafolio_id": portafolio.id_portafolio,
+            "nombre": portafolio.nombre,
+            "activos": [a.ticker for a in activos_db],
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin
+        }
+
+    # Si ocurre cualquier error durante el proceso, se captura la excepción
+    except Exception as e:
+        # Si ocurre un error, revertir cambios
+        db.rollback()
+        raise e
+
+    # Siempre cerrar la sesión de base de datos al finalizar el proceso
+    finally:
+        # Cerrar la sesión siempre
+        db.close()

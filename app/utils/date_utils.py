@@ -7,6 +7,12 @@ Responsabilidades:
 
 from datetime import date
 
+# Importar excepciones personalizadas para manejo de errores específicos
+from app.exceptions import (
+    RangoFechasError,
+    HorizonteInvalidoError
+)
+
 
 # Recibe dos fechas y devuelve la diferencia en años
 def calcular_diferencia_anios(fecha_inicio: date, fecha_fin: date) -> float:
@@ -36,7 +42,7 @@ def validar_rango_fechas(fecha_inicio: date, fecha_fin: date) -> None:
 
     # Validamos que la fecha de inicio sea menor que la fecha de fin
     if fecha_inicio >= fecha_fin:
-        raise ValueError("La fecha de inicio debe ser menor que la fecha de fin.")
+        raise RangoFechasError()
 
 
 # Recibe dos fechas y valida que el rango cumpla con un horizonte mínimo (5 años)
@@ -58,7 +64,4 @@ def validar_horizonte_minimo(fecha_inicio: date,
     - Si la diferencia es suficiente, no se realiza ninguna acción.
     """
     if diferencia < min_anios:
-        raise ValueError(
-            f"El rango de fechas debe ser al menos de {min_anios} años. "
-            f"Actual: {diferencia:.2f} años."
-        )
+        raise HorizonteInvalidoError(min_anios=min_anios, diferencia=diferencia)
