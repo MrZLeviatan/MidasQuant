@@ -98,7 +98,7 @@ A continuación se describen las principales entidades del sistema.
 
 <br>
 
-1. `Portafolio`
+2. `Portafolio`
    Una configuración de activos definida por el usuario.
 
 | Atributo       | Tipo        | ¿Por qué existe?                   |
@@ -120,8 +120,8 @@ A continuación se describen las principales entidades del sistema.
 
 <br>
 
-4. `Serie_Temporal`
-   Almacena la información histórica de precios de cada activo.
+4. `Serie_Temporal_Raw`
+   Almacena la información histórica de precios de cada activo antes del ETL.
 
 | Atributo  | Tipo        | ¿Por qué existe?       |
 | --------- | ----------- | ---------------------- |
@@ -136,7 +136,23 @@ A continuación se describen las principales entidades del sistema.
 
 <br>
 
-5. `Configuración_Analisis`
+5. `Serie_Temporal_Limpia`
+   Almacena la información histórica de precios de cada activo posterior al proceso de ETL.
+
+| Atributo  | Tipo        | ¿Por qué existe?       |
+| --------- | ----------- | ---------------------- |
+| id_serie  | Entero (PK) | Identificador único    |
+| id_activo | Entero (FK) | Relación con el activo |
+| fecha     | Fecha       | Referencia temporal    |
+| open      | Decimal     | Precio de apertura     |
+| high      | Decimal     | Precio máximo          |
+| low       | Decimal     | Precio mínimo          |
+| close     | Decimal     | Precio de cierre       |
+| volumen   | Entero      | Volumen de negociación |
+
+<br>
+
+6. `Configuración_Analisis`
    Almacena los parámetros de ejecución de analisis a Portafolios
 
 | Atributo         | Tipo        | ¿Por qué existe?                      |
@@ -148,6 +164,25 @@ A continuación se describen las principales entidades del sistema.
 
 <br>
 
+7. `Registro_Limpieza`
+   Registro de transformaciones aplicadas durante la limpieza de datos.
+
+| Atributo                | Tipo        | ¿Por qué existe?                      |
+| ----------------------- | ----------- | ------------------------------------- |
+| id_registro             | Entero (PK) | Identificador único                   |
+| id_activo               | Entero (FK) | Relación con el activo                |
+| id_serie_limpia         | Entero (FK) | Relación con la serie temporal limpia |
+| fecha                   | Fecha       | Referencia temporal                   |
+| tipo_problema           | Texto       | Tipo de problema identificado         |
+| accion_aplicada         | Texto       | Acción tomada ante el problema        |
+| valor_original          | Decimal     | Precio antes de la limpieza           |
+| valor_final             | Decimal     | Precio posterior al proceso ETL       |
+| metodo                  | Texto       | Metodo usado para la acción tomada    |
+| justificación           | Texto       | Justificación ante la acción tomada   |
+| timestamp_procesamiento | DataTime    | Tiempo que se demora el proceso ETL   |
+
+<br>
+
 ---
 
 ## Modelo Entidad-Relación (ERD)
@@ -155,15 +190,18 @@ A continuación se describen las principales entidades del sistema.
 El siguiente diagrama representa la estructura lógica de la base de datos, incluyendo entidades, atributos y relaciones.
 
 <p align="left">
-    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774159506/Modelo_Entidad-Relaci%C3%B3n_ERD_fhykzd.jpg" alt="Modelo ERD" />
+    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774171450/Modelo_Entidad-Relaci%C3%B3n_ERD_h2z57i.jpg" alt="Modelo ERD"/>
 </p>
 
 ### Relaciones
 
-- Un **activo** tiene muchos registros en serie_temporal (1:N)
-- Un **portafolio** contiene múltiples activos (N:M)
-- Un **activo** puede pertenecer a múltiples portafolios (N:M)
+- Un **activo** tiene muchos registros en serie_temporal_raw (1:N)
+- Un **activo** tiene muchos registros en serie_temporal_limpia (1:N)
+- Un **portafolio** contiene múltiples activos a través de **portafolio_activo** (N:M)
+- Un **activo** puede pertenecer a múltiples portafolios a través de **portafolio_activo** (N:M)
 - Un **portafolio** puede tener múltiples configuraciones de análisis (1:N)
+- Un **registro de limpieza** pertenece a un solo activo (N:1)
+- Un **registro de limpieza** puede estar asociado a un registro de serie_temporal_limpia (N:1)
 
 <br>
 

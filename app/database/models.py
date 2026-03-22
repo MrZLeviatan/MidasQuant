@@ -10,6 +10,9 @@ Objetivos:
 # Importación de tipos de columnas
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, DateTime
 
+# Importación de UniqueConstraint para evitar duplicados
+from sqlalchemy import UniqueConstraint
+
 # Para timestamps (Guardar fecha y hora exactamente)
 from datetime import datetime
 
@@ -51,8 +54,11 @@ class Activo(Base):
     # Tipo de mercado (Colombiano, USA, etc.)
     mercado = Column(String, nullable=True)
 
-    # Relación con precios
-    precios = relationship("SerieTemporal", back_populates="activo")
+    # Relación con Serie Temporal Raw (Sin modificar)
+    precios_raw = relationship("SerieTemporalRaw", back_populates="activo")
+
+    # Relación con Serie Temporal Limpia (Después de ETL)
+    precios_limpios = relationship("SerieTemporalLimpia", back_populates="activo")
 
     """
     No se tiene relación directa con portafolio_activo porque no se va acceder desde el
@@ -128,12 +134,15 @@ class ConfiguracionAnalisis(Base):
     portafolio = relationship("Portafolio", back_populates="configuraciones")
 
 
-# Tabla: Serie temporal de precios de un activo
-class SerieTemporal(Base):
+# Tabla: Serie temporal Raw de precios de un activo (antes de ETL)
+class SerieTemporalRaw(Base):
     """
-    Serie temporal de precios de un activo.
+    Datos originales de precios de un activo, tal como se obtienen de la fuente.
+
+    - Representa la fuente de verdad para los precios, sin modificaciones.
+    - Nunca debe modificarse después de ser insertada.
     """
-    __tablename__ = "serie_temporal"
+    __tablename__ = "serie_temporal_raw"
 
     id_serie = Column(Integer, primary_key=True, index=True)
 
@@ -146,4 +155,83 @@ class SerieTemporal(Base):
     close = Column(Float)
     volumen = Column(Float)
 
-    activo = relationship("Activo", back_populates="precios")
+    # Restricción para evitar duplicados por activo y fecha
+    __table_args__ = (
+        UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_raw"),
+    )
+
+    activo = relationship("Activo", back_populates="precios_raw")
+
+
+# Tabla: Serie temporal limpia de precios de un activo (después de ETL)
+class SerieTemporalLimpia(Base):
+    """
+    Datos después del proceso de limpieza y transformación.
+
+    Contiene:
+    - Datos alineados
+    - Valores corregidos/interpolados
+    - Dataset listo para análisis
+    """
+    __tablename__ = "serie_temporal_limpia"
+
+    id_serie = Column(Integer, primary_key=True, index=True)
+
+    activo_id = Column(Integer, ForeignKey("activo.id_activo"), index=True)
+
+    fecha = Column(Date, index=True)
+
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volumen = Column(Float)
+
+    # Relación con registros de limpieza
+    registros_limp = relationship("RegistroLimpieza", back_populates="serie_limpia")
+
+    # Restricción para evitar duplicados por activo y fecha
+    __table_args__ = (
+        UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_limpia"),
+    )
+
+    activo = relationship("Activo", back_populates="precios_limpios")
+
+
+# Tabla: Registro de limpieza de datos
+class RegistroLimpieza(Base):
+    """
+    Registro de transformaciones aplicadas durante la limpieza de datos.
+    """
+    __tablename__ = "registro_limpieza"
+
+    id_registro = Column(Integer, primary_key=True, index=True)
+
+    activo_id = Column(Integer, ForeignKey("activo.id_activo"))
+
+    # Relación opcional con dato limpio específico
+    serie_limpia_id = Column(Integer, ForeignKey("serie_temporal_limpia.id_serie"))
+
+    fecha = Column(Date, index=True)
+
+    # Tipo de problema detectado, Ej: missing_value, outlier, inconsistencia
+    tipo_problema = Column(String)
+
+    # Acción tomada, Ej: interpolación, eliminación, forward_fill
+    accion_aplicada = Column(String)
+
+    valor_original = Column(Float)
+    valor_final = Column(Float)
+
+    # Ej: interpolación_lineal, z_score
+    metodo = Column(String)
+
+    # Justificación (clave para el proyecto)
+    justificacion = Column(String)
+
+    timestamp_procesamiento = Column(DateTime, default=datetime)
+
+    # Relaciones
+    activo = relationship("Activo")
+
+    serie_limpia = relationship("SerieTemporalLimpia", back_populates="registros_limp")
