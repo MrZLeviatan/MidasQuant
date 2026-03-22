@@ -48,6 +48,9 @@ class Activo(Base):
     # Tipo de activo (STOCK, ETF)
     tipo_activo = Column(String, nullable=True)
 
+    # Tipo de mercado (Colombiano, USA, etc.)
+    mercado = Column(String, nullable=True)
+
     # Relación con precios
     precios = relationship("SerieTemporal", back_populates="activo")
 

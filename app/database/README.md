@@ -88,16 +88,17 @@ A continuación se describen las principales entidades del sistema.
 1. `Activo` (assets)
    Representa un activo financiero individual (acción o ETF).
 
-| Atributo  | Tipo          | ¿Por qué existe?                                  |
-| --------- | ------------- | ------------------------------------------------- |
-| id_activo | Entero (PK)   | Identificador interno eficiente para relaciones   |
-| ticker    | Texto (único) | Identidad real del activo en el mercado           |
-| nombre    | Texto         | Nombre descriptivo (opcional, mejora legibilidad) |
-| tipo      | Texto         | Clasificación (STOCK, ETF)                        |
+| Atributo    | Tipo          | ¿Por qué existe?                                  |
+| ----------- | ------------- | ------------------------------------------------- |
+| id_activo   | Entero (PK)   | Identificador interno eficiente para relaciones   |
+| ticker      | Texto (único) | Identidad real del activo en el mercado           |
+| nombre      | Texto         | Nombre descriptivo (opcional, mejora legibilidad) |
+| tipo_activo | Texto         | Clasificación (STOCK, ETF)                        |
+| mercado     | Texto         | Tipo de mercado (Colombiano,Usa,etc)              |
 
 <br>
 
-2. `Portafolio`
+1. `Portafolio`
    Una configuración de activos definida por el usuario.
 
 | Atributo       | Tipo        | ¿Por qué existe?                   |
@@ -154,7 +155,7 @@ A continuación se describen las principales entidades del sistema.
 El siguiente diagrama representa la estructura lógica de la base de datos, incluyendo entidades, atributos y relaciones.
 
 <p align="left">
-    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774156048/Modelo_Entidad-Relaci%C3%B3n_ERD_kggjhm.jpg" alt="Icono de Git" />
+    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774159506/Modelo_Entidad-Relaci%C3%B3n_ERD_fhykzd.jpg" alt="Modelo ERD" />
 </p>
 
 ### Relaciones
