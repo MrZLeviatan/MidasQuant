@@ -30,7 +30,7 @@ El diseño está orientado a trabajar en dos entornos:
 - [Modelo de Datos](#modelo-de-datos)
 - [Modelo Entidad-Relación (ERD)](#modelo-entidad-relación-erd)
   - [Relaciones](#relaciones)
-- [Consideraciones de Diseñó](#consideraciones-de-diseñó)
+- [Consideraciones de Diseño](#consideraciones-de-diseño)
 - [Inicialización de la Base de Datos](#inicialización-de-la-base-de-datos)
 
 ---
@@ -207,7 +207,7 @@ El siguiente diagrama representa la estructura lógica de la base de datos, incl
 
 ---
 
-## Consideraciones de Diseñó
+## Consideraciones de Diseño
 
 - Se utiliza un **ID interno** para optimizar relaciones y consultas
 - El campo 'ticker' es único para evitar duplicidad de activos
