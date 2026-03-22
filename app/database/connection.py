@@ -14,7 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Importa configuración centralizada.
-from app.config import DATABASE_URL
+from config import DATABASE_URL
 
 # Asegurar que el directorio de SQLite existe
 if DATABASE_URL.startswith("sqlite:///"):

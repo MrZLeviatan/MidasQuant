@@ -10,6 +10,20 @@ Responsabilidades:
 # framework Streamlit, asigna el alias 'st' para llamadas más compactas.
 import streamlit as st
 
+# Importar la función para inicializar la base de datos
+from database.init_db import init_database
+
+
+# Esta función se ejecuta una sola vez y su resultado se almacena en caché para
+# reutilizarlo en futuras ejecuciones sin volver a inicializar la base de datos.
+@st.cache_resource
+def init_db_once():
+    init_database()
+
+
+# Ejecuta la función de Inicialización de la base de datos y guarda en cache.
+init_db_once()
+
 
 # Configura parámetros globales de la aplicación antes de Renderizar.
 # - page_title: Define el título de la pestaña del navegador.
