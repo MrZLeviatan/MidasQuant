@@ -27,7 +27,7 @@ from ..utils.text_utils import normalizar_tickers, validar_ticker_formato
 from ..utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
 
 # Librerías estándar
-from datetime import date
+from datetime import date, datetime
 
 
 # Función principal del servicio para crear un portafolio completo
@@ -97,7 +97,7 @@ def crear_portafolio_completo(
         # 4. CREAR PORTAFOLIO
         portafolio = Portafolio(
             nombre=nombre_portafolio,
-            fecha_creacion=date.today()
+            fecha_creacion=datetime.now()
         )
         # Agregar el portafolio a la sesión pero no hacer commit aún
         db.add(portafolio)
@@ -151,4 +151,48 @@ def crear_portafolio_completo(
     # Siempre cerrar la sesión de base de datos al finalizar el proceso
     finally:
         # Cerrar la sesión siempre
+        db.close()
+
+
+# Función para obtener todos los portafolios con su configuración (para el combobox)
+def obtener_todos_los_portafolios():
+    """
+    Obtiene lista de portafolios con su configuración para el combobox.
+
+    Complejidad: O(n) por la iteración sobre los portafolios y sus activos.
+    """
+    # Crear sesión de base de datos
+    db = SessionLocal()
+
+    try:
+        # Traemos el portafolio y su configuración asociada (join)
+        resultados = db.query(Portafolio).all()
+
+        # Preparar la lista de portafolios con su configuración para el combobox
+        lista_portafolios = []
+
+        # Iterar sobre los portafolios obtenidos y preparar la información
+        for p in resultados:
+
+            # Buscamos su configuración de análisis
+            conf = db.query(ConfiguracionAnalisis).filter_by(
+                portafolio_id=p.id_portafolio
+            ).first()
+
+            # Buscamos sus tickers
+            tickers_obj = db.query(Activo).join(PortafolioActivo).filter(
+                PortafolioActivo.portafolio_id == p.id_portafolio
+            ).all()
+
+            # Agregar la información del portafolio a la lista de respuesta
+            lista_portafolios.append({
+                "id": p.id_portafolio,
+                "nombre": p.nombre,
+                "fecha_creacion": p.fecha_creacion,
+                "tickers": ", ".join([a.ticker for a in tickers_obj]),
+                "fecha_inicio": conf.fecha_inicio if conf else date(2015, 1, 5),
+                "fecha_fin": conf.fecha_fin if conf else date(2026, 3, 20)
+            })
+        return lista_portafolios
+    finally:
         db.close()

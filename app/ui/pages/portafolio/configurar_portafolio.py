@@ -70,10 +70,24 @@ def render():
     nombre, tickers, fecha_inicio, fecha_fin = form_portafolio()
 
     """
+    Botones de acción en columna para mejor UX.
+    st.column permite organizar los botones horizontalmente.
+    """
+    col1, col2 = st.columns([1, 6])
+
+    with col1:
+        # Botón de Registro
+        btn_registrar = st.button("Registrar Portafolio", type="secondary")
+
+    with col2:
+        # Botón de Limpieza Manual
+        st.button("Limpiar Formulario", type="primary", on_click=limpiar_formulario)
+
+    """
     El botón controla cuándo se ejecuta la lógica.
     Evita ejecuciones automáticas en cada cambio de input.
     """
-    if st.button("Registrar Portafolio"):
+    if btn_registrar:
 
         # VALIDACIÓN DE FORMULARIO
         errores = []
@@ -121,6 +135,9 @@ def render():
 def limpiar_formulario():
     st.session_state["nombre"] = ""
     st.session_state["tickers"] = ""
-    st.session_state["fecha_inicio"] = date(2020, 1, 5)
+    st.session_state["fecha_inicio"] = date(2015, 1, 5)
     st.session_state["fecha_fin"] = date(2026, 3, 20)
     st.session_state["registrado"] = False
+    # Limpiamos también el selector
+    if "selector_portafolio" in st.session_state:
+        st.session_state["selector_portafolio"] = "Cargar configuración existente..."
