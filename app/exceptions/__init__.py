@@ -6,33 +6,39 @@ sin necesidad de conocer la estructura interna del paquete.
 """
 
 # Base
-from .base.dominio_exception import DominioError
+from app.exceptions.base.dominio_exception import DominioError
+from app.exceptions.base.bd_exception import BDException
 
 # Date exceptions
-from .date_exceptions import (
+from app.exceptions.date_exceptions import (
     RangoFechasError,
     HorizonteInvalidoError
 )
 
 # Text exceptions
-from .text_exceptions import (
+from app.exceptions.text_exceptions import (
     TickerInvalidoError,
     ListaTickersVaciaError
 )
 
 # Portafolio exceptions
-from .portafolio_exceptions import (
+from app.exceptions.portafolio_exceptions import (
     MinimoActivosError
+)
+
+# Duplicación exceptions
+from app.exceptions.informacion_duplicada import (
+    NombreDuplicadoError
 )
 
 # Definición de la API pública del módulo
 __all__ = [
     "DominioError",
+    "BDException",
     "RangoFechasError",
     "HorizonteInvalidoError",
     "TickerInvalidoError",
     "ListaTickersVaciaError",
-    "MinimoActivosError"
+    "MinimoActivosError",
+    "NombreDuplicadoError",
 ]
-
-print("Cargando exceptions...")

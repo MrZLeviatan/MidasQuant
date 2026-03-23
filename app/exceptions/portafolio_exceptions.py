@@ -1,4 +1,4 @@
-from .base.dominio_exception import DominioError
+from app.exceptions.base.dominio_exception import DominioError
 
 
 # Excepciones específicas para validaciones de Minimo de Activos en Portafolio

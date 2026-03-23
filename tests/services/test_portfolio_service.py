@@ -39,7 +39,7 @@ def generar_tickers_validos(n=20):
 # TESTS
 
 # Test de creación exitosa con validación de reglas de negocio
-def test_creacion_portafolio_valido():
+def test_creacion_portafolio_valido(db_session):
     """
     Debe crear correctamente un portafolio con datos válidos.
     """
@@ -48,7 +48,8 @@ def test_creacion_portafolio_valido():
         nombre_portafolio="Portafolio Test",
         tickers_input=generar_tickers_validos(20),
         fecha_inicio=date(2015, 1, 1),
-        fecha_fin=date(2021, 1, 1)
+        fecha_fin=date(2021, 1, 1),
+        db=db_session
     )
     # Validar que el resultado tenga la estructura esperada
     assert resultado["nombre"] == "Portafolio Test"
@@ -68,7 +69,7 @@ def test_error_menos_de_20_activos():
             nombre_portafolio="Error Test",
             tickers_input=generar_tickers_validos(10),
             fecha_inicio=date(2015, 1, 1),
-            fecha_fin=date(2021, 1, 1)
+            fecha_fin=date(2021, 1, 1),
         )
 
 
@@ -100,11 +101,11 @@ def test_error_horizonte_menor_5_anios():
             nombre_portafolio="Error Horizonte",
             tickers_input=generar_tickers_validos(20),
             fecha_inicio=date(2020, 1, 1),
-            fecha_fin=date(2022, 1, 1)
+            fecha_fin=date(2022, 1, 1),
         )
 
 
-# Test de errores por incumplimiento de reglas de negocio (ticker inválido)
+# Test de errores por incumplimiento de reglas de negocio (ticker con formato inválido)
 def test_error_ticker_invalido():
     """
     Debe fallar si se incluye un ticker con formato inválido.
@@ -119,5 +120,5 @@ def test_error_ticker_invalido():
             nombre_portafolio="Error Ticker",
             tickers_input=ticker_input,
             fecha_inicio=date(2015, 1, 1),
-            fecha_fin=date(2021, 1, 1)
+            fecha_fin=date(2021, 1, 1),
         )

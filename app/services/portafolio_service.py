@@ -7,13 +7,15 @@ Responsabilidades:
 """
 
 # Sesión de base de datos
-from app.database.connection import SessionLocal
+from ..database.connection import SessionLocal
+from sqlalchemy.exc import IntegrityError
 
 # Excepciones específicas del dominio
-from app.exceptions import MinimoActivosError
+from ..exceptions import MinimoActivosError
+from ..exceptions import NombreDuplicadoError
 
 # Llamada a los modelos ORM
-from app.database.models import (
+from ..database.models import (
     Activo,
     Portafolio,
     PortafolioActivo,
@@ -21,8 +23,8 @@ from app.database.models import (
 )
 
 # Llamada a utilidades de validación y normalización
-from app.utils.text_utils import normalizar_tickers, validar_ticker_formato
-from app.utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
+from ..utils.text_utils import normalizar_tickers, validar_ticker_formato
+from ..utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
 
 # Librerías estándar
 from datetime import date
@@ -39,7 +41,7 @@ def crear_portafolio_completo(
     """
     Crea un portafolio completo con sus activos y configuración de análisis.
 
-    Complejidad: O(n)
+    Complejidad: O(n) por la iteración sobre las listas en ciclos.
     """
 
     # 1. NORMALIZACIÓN DE TICKERS: Convierte el string en lista limpia
@@ -134,6 +136,11 @@ def crear_portafolio_completo(
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin
         }
+
+    # Manejo de errores específicos de integridad (como nombre de portafolio duplicado)
+    except IntegrityError:
+        db.rollback()
+        raise NombreDuplicadoError(nombre_portafolio=portafolio.nombre)
 
     # Si ocurre cualquier error durante el proceso, se captura la excepción
     except Exception as e:

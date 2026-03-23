@@ -75,7 +75,7 @@ class Portafolio(Base):
 
     id_portafolio = Column(Integer, primary_key=True, index=True)
 
-    nombre = Column(String, nullable=False)
+    nombre = Column(String, nullable=False, unique=True)
 
     # Fecha de creación automática
     fecha_creacion = Column(DateTime, default=datetime)

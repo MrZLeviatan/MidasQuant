@@ -5,10 +5,10 @@ Objetivos: Crear todas las tablas definidas en models.py
 """
 
 # La conexión entre la aplicación y la base de datos
-from database.connection import engine
+from app.database.connection import engine
 
 # Importar la clase Base para crear las tablas a partir de los modelos definidos
-from database.models import Base
+from app.database.models import Base
 
 
 def init_database():

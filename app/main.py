@@ -11,7 +11,9 @@ Responsabilidades:
 import streamlit as st
 
 # Importar la función para inicializar la base de datos
-from database.init_db import init_database
+from app.database.init_db import init_database
+
+from app.ui.pages.portafolio.configurar_portafolio import render as r_config_portafolio
 
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
@@ -38,6 +40,17 @@ st.set_page_config(
 st.title("Proyecto - Análisis de Algoritmos Financieros")
 
 
-# Muestra un texto descriptivo debajo del título.
-# Proporciona contexto funcional al usuario.
-st.write("Sistema de análisis de series de tiempo financieras")
+# NAVEGACIÓN PRINCIPAL ENTRE PÁGINAS
+
+# Diccionario de páginas: clave = nombre visible, valor = función render
+paginas = {
+    "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
+    "Registro de Portafolio": r_config_portafolio,
+    # Futuras páginas se pueden agregar aquí
+}
+
+# Selección de página mediante barra lateral
+pagina_seleccionada = st.sidebar.radio("Navegación", list(paginas.keys()))
+
+# Renderizar condicional según selección
+paginas[pagina_seleccionada]()

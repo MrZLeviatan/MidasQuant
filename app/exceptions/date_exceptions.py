@@ -1,5 +1,5 @@
 # Base de excepciones para errores relacionados a las reglas del dominio
-from .base.dominio_exception import DominioError
+from app.exceptions.base.dominio_exception import DominioError
 
 
 # Excepciones específicas para validaciones de fechas en el dominio
