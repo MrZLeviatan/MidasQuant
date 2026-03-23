@@ -1,4 +1,4 @@
-class BDException(Exception):
+class BDError(Exception):
     """
     Clase base para todos los errores de la base de datos.
     Permite capturar errores relacionados a la base de datos.

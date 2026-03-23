@@ -7,7 +7,9 @@ sin necesidad de conocer la estructura interna del paquete.
 
 # Base
 from app.exceptions.base.dominio_exception import DominioError
-from app.exceptions.base.bd_exception import BDException
+from app.exceptions.base.bd_exception import BDError
+from app.exceptions.base.fuente_exception import FuenteError
+
 
 # Date exceptions
 from app.exceptions.date_exceptions import (
@@ -31,14 +33,28 @@ from app.exceptions.informacion_duplicada import (
     NombreDuplicadoError
 )
 
+# Fuentes de extracción exceptions
+from app.exceptions.extraccion_exceptions import (
+    YahooError,
+    StooqError,
+    MarketWatchError,
+    ExtraccionFallidaError
+)
+
+
 # Definición de la API pública del módulo
 __all__ = [
     "DominioError",
-    "BDException",
+    "BDError",
+    "FuenteError",
     "RangoFechasError",
     "HorizonteInvalidoError",
     "TickerInvalidoError",
     "ListaTickersVaciaError",
     "MinimoActivosError",
     "NombreDuplicadoError",
+    "YahooError",
+    "StooqError",
+    "MarketWatchError",
+    "ExtraccionFallidaError"
 ]

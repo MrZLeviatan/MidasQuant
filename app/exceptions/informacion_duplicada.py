@@ -1,8 +1,8 @@
-from app.exceptions.base.bd_exception import BDException
+from app.exceptions.base.bd_exception import BDError
 
 
 # Excepciones específicas para validación de tickers en el servicio de portafolio
-class NombreDuplicadoError(BDException):
+class NombreDuplicadoError(BDError):
     """
     Excepción personalizada para indicar que un nombre es duplicado.
 
