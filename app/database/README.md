@@ -26,7 +26,7 @@ El diseño está orientado a trabajar en dos entornos:
 - [Estructura del Módulo](#estructura-del-módulo)
   - [1. connection.py](#1-connectionpy)
   - [2. models.py](#2-modelspy)
-  - [3. init\_db.py](#3-init_dbpy)
+  - [3. init_db.py](#3-init_dbpy)
 - [Modelo de Datos](#modelo-de-datos)
 - [Modelo Entidad-Relación (ERD)](#modelo-entidad-relación-erd)
   - [Relaciones](#relaciones)
@@ -101,11 +101,12 @@ A continuación se describen las principales entidades del sistema.
 2. `Portafolio`
    Una configuración de activos definida por el usuario.
 
-| Atributo       | Tipo        | ¿Por qué existe?                   |
-| -------------- | ----------- | ---------------------------------- |
-| id_portafolio  | Entero (PK) | Identificador único                |
-| nombre         | Texto       | Permite distinguir configuraciones |
-| fecha_creacion | DataTime    | Control temporal y trazabilidad    |
+| Atributo       | Tipo        | ¿Por qué existe?                                 |
+| -------------- | ----------- | ------------------------------------------------ |
+| id_portafolio  | Entero (PK) | Identificador único                              |
+| nombre         | Texto       | Permite distinguir configuraciones               |
+| fecha_creacion | DataTime    | Control temporal y trazabilidad                  |
+| isETL          | Boolean     | Verifica si el portafolio ya tuvo el proceso ETL |
 
 <br>
 
@@ -190,7 +191,7 @@ A continuación se describen las principales entidades del sistema.
 El siguiente diagrama representa la estructura lógica de la base de datos, incluyendo entidades, atributos y relaciones.
 
 <p align="left">
-    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774171450/Modelo_Entidad-Relaci%C3%B3n_ERD_h2z57i.jpg" alt="Modelo ERD"/>
+    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774256175/Modelo_Entidad-Relaci%C3%B3n_ERD_kr99mm.jpg" alt="Modelo ERD"/>
 </p>
 
 ### Relaciones
@@ -227,7 +228,7 @@ El siguiente diagrama representa la estructura lógica de la base de datos, incl
 La base de datos se inicializa al ejecutar el comando local:
 
 ```bash
-streamlit run app/main.py
+python -m streamlit run app/main.py
 ```
 
 Pero si se desea creara de forma manual, se puede ejecutar el comando:

@@ -154,7 +154,7 @@ def crear_portafolio_completo(
         db.close()
 
 
-# Función para obtener todos los portafolios con su configuración (para el combobox)
+# Función para obtener todos los portafolios con su configuración
 def obtener_todos_los_portafolios():
     """
     Obtiene lista de portafolios con su configuración para el combobox.

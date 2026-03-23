@@ -9,6 +9,7 @@ Objetivos:
 
 # Importación de tipos de columnas
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, DateTime
+from sqlalchemy import Boolean
 
 # Importación de UniqueConstraint para evitar duplicados
 from sqlalchemy import UniqueConstraint
@@ -78,7 +79,10 @@ class Portafolio(Base):
     nombre = Column(String, nullable=False, unique=True)
 
     # Fecha de creación automática
-    fecha_creacion = Column(DateTime, default=datetime)
+    fecha_creacion = Column(DateTime, default=datetime.now())
+
+    # Columna booleana indicando si el ETL ya se ejecutó
+    isETL = Column(Boolean, nullable=False, default=False)
 
     """
     relationship: permite definir relaciones entre tablas sin escribir SQL.
