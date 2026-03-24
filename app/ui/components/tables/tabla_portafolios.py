@@ -19,7 +19,8 @@ def mostrar_tabla_portafolios(data: list[dict]):
     # Valida si la lista viene vacía, muestra mensaje informativo.
     if not data:
         st.info("No hay portafolios registrados")
-        return None
+        # Devolvemos dos valores nulos
+        return None, None
 
     # Inicializa la variable de selección si no existe en la sesión.
     if "portafolio_seleccionado" not in st.session_state:
@@ -51,10 +52,9 @@ def mostrar_tabla_portafolios(data: list[dict]):
 
     # Renderiza la tabla interactiva
     st.subheader("Portafolios registrados")
-
     edited_df = st.data_editor(
         df,
-        use_container_width=True,
+        width="stretch",
         # Altura fija para forzar scroll si hay muchos registros.
         height=250,
         column_config={
@@ -97,5 +97,14 @@ def mostrar_tabla_portafolios(data: list[dict]):
         st.session_state["portafolio_seleccionado"] = None
         st.rerun()
 
+    # --- BÚSQUEDA DEL NOMBRE ---
+    id_final = st.session_state["portafolio_seleccionado"]
+    nombre_final = None
+
+    if id_final:
+        # Buscamos el nombre correspondiente al ID en nuestro DataFrame
+        nombre_final = df.loc[df["ID"] == id_final, "Nombre"].values[0]
+
     # Devuelve el ID seleccionado para que otros componentes de la app lo utilicen.
-    return st.session_state["portafolio_seleccionado"]
+    # Devuelve el nombre del Portafolio
+    return id_final, nombre_final

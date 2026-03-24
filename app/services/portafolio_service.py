@@ -248,3 +248,59 @@ def obtener_resumen_portafolios():
     # Finalmente, cierra sesión pase lo que pase para liberar recursos
     finally:
         db.close()
+
+
+# Función para obtener los activos de un Portafolio mediante su Id.
+def obtener_activos_de_portafolio(portafolio_id: int):
+    """
+    Obtiene los activos asociados a un portafolio.
+
+    Regla de negocio:
+    - Si el ETL no se ha ejecutado → solo mostrar ticker
+    - Si ETL ya se ejecutó → mostrar todos los campos
+
+    Complejidad: O(n) por los Joinedload y el bucle de activos.
+    """
+    # Abre una nueva sesión de conexión con la BD,
+    db = SessionLocal()
+
+    # Parsear de String a int (Pasa con el Streamlit)
+    portafolio_id = int(portafolio_id)
+
+    try:
+        """
+        Consulta única optimizada:
+        - Buscamos el portafolio por ID.
+        - .options(joinedload(...)): Realiza un SQL JOIN para traer la tabla intermedia
+            y los activos finales de una vez, evitando el problema de N+1 consultas.
+        """
+        portafolio = db.query(Portafolio).options(
+            joinedload(Portafolio.activos).joinedload(PortafolioActivo.activo)
+        ).filter(Portafolio.id_portafolio == portafolio_id).first()
+
+        if not portafolio:
+            return []
+
+        # Construcción del resultado usando la relación definida en el modelo.
+        # Navegamos: Portafolio -> PortafolioActivo (pa) -> Activo (pa.activo)
+        resultado = []
+        is_etl_ready = portafolio.isETL
+
+        # Iteramos sobre cada activo del portafolio
+        for pa in portafolio.activos:
+            activo = pa.activo
+            """
+            Regla de negocio:
+            - Si IsETL es False, solo se expone el ticker seleccionado por el Usuario.
+            """
+            resultado.append({
+                "ticker": activo.ticker,
+                "nombre": activo.nombre if is_etl_ready else "",
+                "tipo_activo": activo.tipo_activo if is_etl_ready else "",
+                "mercado": activo.mercado if is_etl_ready else ""
+            })
+
+        return resultado
+    # Liberación de la conexión al pool.
+    finally:
+        db.close()

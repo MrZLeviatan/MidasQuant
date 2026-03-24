@@ -47,7 +47,7 @@ st.title("Proyecto - Análisis de Algoritmos Financieros")
 paginas = {
     "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
     "Registro de Portafolio": r_config_portafolio,
-    "Ver Portafolios": r_listar_portafolios
+    "Ver Portafolios y ETL": r_listar_portafolios
     # Futuras páginas se pueden agregar aquí
 }
 
