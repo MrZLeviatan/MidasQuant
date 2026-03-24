@@ -7,18 +7,18 @@ Responsabilidades:
 """
 
 # Sesión de base de datos
-from ..database.connection import SessionLocal
+from ...database.connection import SessionLocal
 from sqlalchemy.exc import IntegrityError
 # Utilizado para joined en relación de métodos
 from sqlalchemy.orm import joinedload
 
 
 # Excepciones específicas del dominio
-from ..exceptions import MinimoActivosError
-from ..exceptions import NombreDuplicadoError
+from ...exceptions import MinimoActivosError
+from ...exceptions import NombreDuplicadoError
 
 # Llamada a los modelos ORM
-from ..database.models import (
+from ...database.models import (
     Activo,
     Portafolio,
     PortafolioActivo,
@@ -26,8 +26,8 @@ from ..database.models import (
 )
 
 # Llamada a utilidades de validación y normalización
-from ..utils.text_utils import normalizar_tickers, validar_ticker_formato
-from ..utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
+from ...utils.text_utils import normalizar_tickers, validar_ticker_formato
+from ...utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
 
 # Librerías estándar
 from datetime import date, datetime

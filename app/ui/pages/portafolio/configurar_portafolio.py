@@ -17,7 +17,7 @@ from app.ui.components.forms.form_portafolio import form_portafolio
 from app.ui.components.feedback.alerts import mostrar_error, mostrar_exito
 
 # Lógica de negocio
-from app.services.portafolio_service import crear_portafolio_completo
+from app.services.portafolios.portafolio_service import crear_portafolio_completo
 
 # Excepciones del dominio
 from app.exceptions import (

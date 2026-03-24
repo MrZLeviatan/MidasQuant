@@ -5,7 +5,7 @@ Página para visualizar portafolios registrados.
 import streamlit as st
 
 # Importación de la capa de servicios (Lógica de negocio y consultas a BD).
-from app.services.portafolio_service import (
+from app.services.portafolios.portafolio_service import (
     obtener_resumen_portafolios,
     obtener_activos_de_portafolio
 )

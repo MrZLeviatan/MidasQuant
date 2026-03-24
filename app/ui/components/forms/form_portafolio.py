@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from app.constants.tickers import TICKERS_REALES
 
-from app.services.portafolio_service import obtener_todos_los_portafolios
+from app.services.portafolios.portafolio_service import obtener_todos_los_portafolios
 
 
 # Carga los datos del Portafolio seleccionado en el comboBox

@@ -10,7 +10,7 @@ import pytest
 from datetime import date
 
 # Importar la función a probar
-from app.services.portafolio_service import crear_portafolio_completo
+from app.services.portafolios.portafolio_service import crear_portafolio_completo
 
 from app.exceptions import (
     MinimoActivosError,
