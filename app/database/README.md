@@ -154,7 +154,7 @@ A continuación se describen las principales entidades del sistema.
 <br>
 
 6. `Configuración_Analisis`
-   Almacena los parámetros de ejecución de analisis a Portafolios
+   Almacena los parámetros de ejecución de analisis a un Portafolio
 
 | Atributo         | Tipo        | ¿Por qué existe?                      |
 | ---------------- | ----------- | ------------------------------------- |
@@ -191,7 +191,7 @@ A continuación se describen las principales entidades del sistema.
 El siguiente diagrama representa la estructura lógica de la base de datos, incluyendo entidades, atributos y relaciones.
 
 <p align="left">
-    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774256175/Modelo_Entidad-Relaci%C3%B3n_ERD_kr99mm.jpg" alt="Modelo ERD"/>
+    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774391822/Modelo_Entidad-Relaci%C3%B3n_ERD_ppnt1q.jpg" alt="Modelo ERD"/>
 </p>
 
 ### Relaciones
@@ -200,7 +200,7 @@ El siguiente diagrama representa la estructura lógica de la base de datos, incl
 - Un **activo** tiene muchos registros en serie_temporal_limpia (1:N)
 - Un **portafolio** contiene múltiples activos a través de **portafolio_activo** (N:M)
 - Un **activo** puede pertenecer a múltiples portafolios a través de **portafolio_activo** (N:M)
-- Un **portafolio** puede tener múltiples configuraciones de análisis (1:N)
+- Un **portafolio** contiene una configuración única (1:1)
 - Un **registro de limpieza** pertenece a un solo activo (N:1)
 - Un **registro de limpieza** puede estar asociado a un registro de serie_temporal_limpia (N:1)
 

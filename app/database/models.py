@@ -92,7 +92,9 @@ class Portafolio(Base):
     activos = relationship("PortafolioActivo", back_populates="portafolio")
 
     # Relación con configuraciones
-    configuraciones = relationship("ConfiguracionAnalisis", back_populates="portafolio")
+    configuracion = relationship(
+        "ConfiguracionAnalisis", back_populates="portafolio", uselist=False
+    )
 
 
 # Tabla intermedia entre Portafolio y Activos (N:M)
@@ -130,12 +132,13 @@ class ConfiguracionAnalisis(Base):
 
     id_configuracion = Column(Integer, primary_key=True, index=True)
 
-    portafolio_id = Column(Integer, ForeignKey("portafolio.id_portafolio"))
+    portafolio_id = Column(
+        Integer, ForeignKey("portafolio.id_portafolio"), unique=True, nullable=False)
 
     fecha_inicio = Column(Date, nullable=False)
     fecha_fin = Column(Date, nullable=False)
 
-    portafolio = relationship("Portafolio", back_populates="configuraciones")
+    portafolio = relationship("Portafolio", back_populates="configuracion")
 
 
 # Tabla: Serie temporal Raw de precios de un activo (antes de ETL)

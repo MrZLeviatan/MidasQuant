@@ -157,6 +157,29 @@ def crear_portafolio_completo(
         db.close()
 
 
+# Función para obtener un Portafolio mediante su Id
+def obtener_portafolio_con_relaciones(db, portafolio_id: int):
+    """
+    Obtiene el portafolio mediante su ID con las relaciones de:
+    - activos
+    - configuraciones
+
+    Complejidad: O(1) Gracias a joinedload se resuelve la búsqueda en una sola
+    """
+    # Inicia la construcción de la consulta sobre la entidad 'Portafolio'
+    return db.query(Portafolio).options(
+        # Realiza un SQL Join para traer los activos vinculados al portafolio
+        # a través de la tabla intermedia (PortafolioActivos) y el objeto Activo final
+        joinedload(Portafolio.activos).joinedload(PortafolioActivo.activo),
+        # Trae también la configuración (fechas, etc.) en el mismo SELECT.
+        joinedload(Portafolio.configuracion)
+        # Busca coincidencias exactas con la llave primaria 'id_portafolio'.
+    ).filter(
+        Portafolio.id_portafolio == portafolio_id
+        # Retorna el primer objeto encontrado o 'None' si no existe el registro.
+    ).first()
+
+
 # Función para obtener todos los portafolios con su configuración (Usado en comboBox).
 def obtener_todos_los_portafolios():
     """
@@ -178,9 +201,7 @@ def obtener_todos_los_portafolios():
         for p in resultados:
 
             # Buscamos su configuración de análisis
-            conf = db.query(ConfiguracionAnalisis).filter_by(
-                portafolio_id=p.id_portafolio
-            ).first()
+            conf = p.configuracion
 
             # Buscamos sus tickers
             tickers_obj = db.query(Activo).join(PortafolioActivo).filter(
@@ -222,7 +243,7 @@ def obtener_resumen_portafolios():
         # - .all(): Ejecuta la consulta y trae todos los registros a memoria.
         """
         portafolios = db.query(Portafolio).options(
-            joinedload(Portafolio.configuraciones)
+            joinedload(Portafolio.configuracion)
         ).all()
 
         resultado = []
@@ -230,8 +251,7 @@ def obtener_resumen_portafolios():
         # Itera sobre cada objeto de portafolio recuperado.
         for p in portafolios:
             # Intenta obtener la primera configuración asociada
-            # Se usa una expresión ternaria para evitar errores si la lista está vacía.
-            conf = p.configuraciones[0] if p.configuraciones else None
+            conf = p.configuracion
 
             # Mapea el objeto de base de datos a un diccionario simple
             resultado.append({
