@@ -1,4 +1,4 @@
-from app.exceptions.base.fuente_exception import FuenteError
+from app.exceptions.base_exceptions import FuenteError
 
 
 # Exception propia para el manejo de Yahoo Finance.

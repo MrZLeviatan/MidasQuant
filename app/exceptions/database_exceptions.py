@@ -1,4 +1,4 @@
-from app.exceptions.base.bd_exception import BDError
+from app.exceptions.base_exceptions import BDError
 
 
 # Excepciones específicas para validación de tickers en el servicio de portafolio
@@ -16,3 +16,15 @@ class NombreDuplicadoError(BDError):
         )
     # Guardamos contexto adicional
         self.nombre_portafolio = nombre_portafolio
+
+
+# Exceptions para los recursos no encontrados mediante un ID
+class RecursoNoEncontrado(BDError):
+    """
+    Excepción personalizada para indicar que un objeto no fue encontrado.
+    """
+    def __init__(self, recurso: str, id_valor: any):
+        super().__init__(
+            message=f"No encontrado el recurso '{recurso}' con el ID: {id_valor}",
+            code="RECURSO_NO_ENCONTRADO"
+        )

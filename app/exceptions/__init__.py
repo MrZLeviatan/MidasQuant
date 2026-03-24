@@ -5,36 +5,32 @@ Expone una API pública simplificada para importar excepciones
 sin necesidad de conocer la estructura interna del paquete.
 """
 
-# Base
-from app.exceptions.base.dominio_exception import DominioError
-from app.exceptions.base.bd_exception import BDError
-from app.exceptions.base.fuente_exception import FuenteError
+# Base de las excepciones
+from app.exceptions.base_exceptions import (
+    BDError,
+    DominioError,
+    FuenteError
+)
 
 
-# Date exceptions
-from app.exceptions.date_exceptions import (
+# Excepciones relacionadas a las reglas del dominio
+from app.exceptions.dominio_exceptions import (
     RangoFechasError,
-    HorizonteInvalidoError
-)
-
-# Text exceptions
-from app.exceptions.text_exceptions import (
+    HorizonteInvalidoError,
     TickerInvalidoError,
-    ListaTickersVaciaError
-)
-
-# Portafolio exceptions
-from app.exceptions.portafolio_exceptions import (
+    ListaTickersVaciaError,
     MinimoActivosError
 )
 
-# Duplicación exceptions
-from app.exceptions.informacion_exceptions import (
-    NombreDuplicadoError
+
+# Excepciones relacionadas al manejo de la BD
+from app.exceptions.database_exceptions import (
+    NombreDuplicadoError,
+    RecursoNoEncontrado
 )
 
-# Fuentes de extracción exceptions
-from app.exceptions.extraccion_exceptions import (
+# Excepciones relacionadas a las fuentes de extracción
+from app.exceptions.fuentes_exceptions import (
     YahooError,
     StooqError,
     MarketWatchError,
@@ -56,5 +52,6 @@ __all__ = [
     "YahooError",
     "StooqError",
     "MarketWatchError",
-    "ExtraccionFallidaError"
+    "ExtraccionFallidaError",
+    "RecursoNoEncontrado"
 ]
