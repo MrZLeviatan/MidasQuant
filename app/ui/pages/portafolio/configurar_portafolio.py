@@ -14,7 +14,7 @@ from datetime import date
 
 # Componentes reutilizables de UI
 from app.ui.components.forms.form_portafolio import form_portafolio
-from app.ui.components.alerts import mostrar_error, mostrar_exito
+from app.ui.components.feedback.alerts import mostrar_error, mostrar_exito
 
 # Lógica de negocio
 from app.services.portafolio_service import crear_portafolio_completo
@@ -73,7 +73,7 @@ def render():
     Botones de acción en columna para mejor UX.
     st.column permite organizar los botones horizontalmente.
     """
-    col1, col2 = st.columns([1, 6])
+    col1, col2 = st.columns([1, 5])
 
     with col1:
         # Botón de Registro

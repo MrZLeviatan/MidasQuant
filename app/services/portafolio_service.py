@@ -9,6 +9,9 @@ Responsabilidades:
 # Sesión de base de datos
 from ..database.connection import SessionLocal
 from sqlalchemy.exc import IntegrityError
+# Utilizado para joined en relación de métodos
+from sqlalchemy.orm import joinedload
+
 
 # Excepciones específicas del dominio
 from ..exceptions import MinimoActivosError
@@ -154,7 +157,7 @@ def crear_portafolio_completo(
         db.close()
 
 
-# Función para obtener todos los portafolios con su configuración
+# Función para obtener todos los portafolios con su configuración (Usado en comboBox).
 def obtener_todos_los_portafolios():
     """
     Obtiene lista de portafolios con su configuración para el combobox.
@@ -194,5 +197,54 @@ def obtener_todos_los_portafolios():
                 "fecha_fin": conf.fecha_fin if conf else date(2026, 3, 20)
             })
         return lista_portafolios
+    finally:
+        db.close()
+
+
+# Función para obtener un resumen de todos los portafolios (Usado en Tablas).
+def obtener_resumen_portafolios():
+    """
+    Obtiene información resumida de portafolios para visualización en tabla.
+
+    Complejidad: O(n) por los Joinedload y el bucle de procesamiento.
+    """
+    # Abre una nueva sesión de conexión con la BD,
+    db = SessionLocal()
+
+    try:
+        """
+        Realiza una consulta principal:
+
+        - db.query(Portafolio): Busca en la tabla de portafolios
+        - .options(joinedload(...)): Realiza un "JOIN" en SQL para traer la
+            configuración de análisis en la misma consulta, evitando consultar
+            la BD dentro del bucle.
+        # - .all(): Ejecuta la consulta y trae todos los registros a memoria.
+        """
+        portafolios = db.query(Portafolio).options(
+            joinedload(Portafolio.configuraciones)
+        ).all()
+
+        resultado = []
+
+        # Itera sobre cada objeto de portafolio recuperado.
+        for p in portafolios:
+            # Intenta obtener la primera configuración asociada
+            # Se usa una expresión ternaria para evitar errores si la lista está vacía.
+            conf = p.configuraciones[0] if p.configuraciones else None
+
+            # Mapea el objeto de base de datos a un diccionario simple
+            resultado.append({
+                "id": p.id_portafolio,
+                "nombre": p.nombre,
+                "fecha_creacion": p.fecha_creacion,
+                "fecha_inicio": conf.fecha_inicio if conf else None,
+                "fecha_fin": conf.fecha_fin if conf else None,
+                "etl": "Sí" if p.isETL else "No"
+            })
+
+        # Retorna la lista de diccionario lista para ser usada.
+        return resultado
+    # Finalmente, cierra sesión pase lo que pase para liberar recursos
     finally:
         db.close()

@@ -23,7 +23,7 @@ def mostrar_error(mensaje: str, segundos: int = 6):
 
 
 # Función para mostrar mensajes de éxito
-def mostrar_exito(mensaje: str, segundos: int = 6):
+def mostrar_exito(mensaje: str, segundos: int = 4):
     """
     Muestra un mensaje de éxito en la interfaz.
     """

@@ -14,6 +14,7 @@ import streamlit as st
 from app.database.init_db import init_database
 
 from app.ui.pages.portafolio.configurar_portafolio import render as r_config_portafolio
+from app.ui.pages.portafolio.listar_portafolios import render as r_listar_portafolios
 
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
@@ -46,6 +47,7 @@ st.title("Proyecto - Análisis de Algoritmos Financieros")
 paginas = {
     "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
     "Registro de Portafolio": r_config_portafolio,
+    "Ver Portafolios": r_listar_portafolios
     # Futuras páginas se pueden agregar aquí
 }
 
