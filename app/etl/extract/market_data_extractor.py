@@ -68,7 +68,6 @@ class ExtractorFinanciero:
     def extraer(self, ticker: str, fecha_inicio: date, fecha_fin: date):
         """
         Orquestador principal de extracción de datos financieros.
-
         - Itera secuencialmente sobre una lista de motores de extracción
         - Facilidad en agregar nuevas fuentes
         - Implementación de failover
@@ -114,8 +113,7 @@ class ExtractorFinanciero:
     def _motor_yahoo(self, ticker, f_inicio, f_fin):
         """
         Motor de extracción de datos históricos desde Yahoo Finance.
-
-        Utiliza el endpoint de Yahoo que retorna datos en formato JSON.
+        - Utiliza el endpoint de Yahoo que retorna datos en formato JSON.
         Convierte un rango de fechas a timestamps UNIX y normaliza la respuesta
         a formato OHLCV.
 
@@ -209,8 +207,7 @@ class ExtractorFinanciero:
     def _motor_stooq(self, ticker, f_inicio, f_fin):
         """
         Motor de extracción de datos históricos desde Stooq
-
-        Utiliza el endpoint de Stooq que retorna datos en formato CSV
+        - Utiliza el endpoint de Stooq que retorna datos en formato CSV
         (Muy bueno para índices globales). Normaliza las columnas y filas
         a formato OHLCV.
 
@@ -281,11 +278,9 @@ class ExtractorFinanciero:
     def _motor_marketwatch(self, ticker, f_inicio, f_fin):
         """
         Motor de extracción desde MarketWatch (implementación parcial / placeholder)
-
-        Utiliza el endpoint de MarketWatch que retorna datos en formato HTML/CSV
+        - Utiliza el endpoint de MarketWatch que retorna datos en formato HTML/CSV
         y se normaliza a formato OHLCV.
-
-        Ejemplo de 'Scraping ético' manual de MarketWatch.
+        - Ejemplo de 'Scraping ético' manual de MarketWatch.
 
         Complejidad: O(n) por la iteración en su número de registros
         """
@@ -391,7 +386,6 @@ class OHLCVValidador:
     def validar(data: list[dict]) -> list[dict]:
         """
         Valida y limpia una lista de registros OHLCV.
-
         Retorna: Lista limpia y validada
 
         Complejidad O(n log n) por el sort

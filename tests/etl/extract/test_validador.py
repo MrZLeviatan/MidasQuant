@@ -5,7 +5,7 @@ Objetivos:
 from datetime import date
 # Se testea directamente el motor interno.
 
-from app.etl.extract.extractor_mercados_publicos import OHLCVValidador
+from app.etl.extract.market_data_extractor import OHLCVValidador
 
 # TESTS
 

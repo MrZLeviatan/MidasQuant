@@ -29,7 +29,7 @@ from app.exceptions.portafolio_exceptions import (
 )
 
 # Duplicación exceptions
-from app.exceptions.informacion_duplicada import (
+from app.exceptions.informacion_exceptions import (
     NombreDuplicadoError
 )
 

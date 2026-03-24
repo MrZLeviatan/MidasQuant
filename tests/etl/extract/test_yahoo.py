@@ -10,7 +10,7 @@ import pytest
 from datetime import date
 
 # Se testea directamente el motor interno.
-from app.etl.extract.extractor_mercados_publicos import ExtractorFinanciero
+from app.etl.extract.market_data_extractor import ExtractorFinanciero
 from app.exceptions import YahooError
 
 
