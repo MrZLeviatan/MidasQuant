@@ -95,15 +95,19 @@ def setup_mock_db():
         MockActivo(1, "AAPL"),
         MockActivo(2, "ETH-USD")
     ]
+
+    fecha_inicio = date(2020, 1, 1)
+    fecha_fin = date(2020, 1, 4)
+
     # Se entrega el escenario al test
     # CAINE?
-    return db, activos
+    return db, activos, fecha_inicio, fecha_fin
 
 
 # Verificación de estructura
 def test_alineacion_estructura(setup_mock_db):
     # Carga el escenario
-    db, activos = setup_mock_db
+    db, activos, fecha_inicio, fecha_fin = setup_mock_db
 
     # asignar activo dinámicamente
     resultado = {}
@@ -112,7 +116,9 @@ def test_alineacion_estructura(setup_mock_db):
         # Prepara la BD para todos los activos
         db.set_activo(activo.id_activo)
         # Ejecuta la función real y guarda el resultado
-        resultado.update(alinear_series_temporales(db, [activo]))
+        resultado.update(alinear_series_temporales(
+            db, [activo], fecha_inicio, fecha_fin)
+        )
 
     # Verifica el resultado ( AAPL tenga 4 fechas)
     assert "AAPL" in resultado
@@ -122,13 +128,15 @@ def test_alineacion_estructura(setup_mock_db):
 
 # Verificación de Huecos (Gaps)
 def test_alineacion_valores_correctos(setup_mock_db):
-    db, activos = setup_mock_db
+    db, activos, fecha_inicio, fecha_fin = setup_mock_db
 
     resultado = {}
 
     for activo in activos:
         db.set_activo(activo.id_activo)
-        resultado.update(alinear_series_temporales(db, [activo]))
+        resultado.update(alinear_series_temporales(
+            db, [activo], fecha_inicio, fecha_fin)
+        )
 
     aapl = resultado["AAPL"]
 
@@ -143,9 +151,11 @@ def test_alineacion_valores_correctos(setup_mock_db):
 
 # Verificación si Huecos (Gaps)
 def test_activo_sin_faltantes(setup_mock_db):
-    db, activos = setup_mock_db
+    db, activos, fecha_inicio, fecha_fin = setup_mock_db
     db.set_activo(2)
-    resultado = alinear_series_temporales(db, [activos[1]])
+    resultado = alinear_series_temporales(
+        db, [activos[1]], fecha_inicio, fecha_fin
+    )
     eth = resultado["ETH-USD"]
     # Ningún None
     assert all(x["valor"] is not None for x in eth)
@@ -153,9 +163,11 @@ def test_activo_sin_faltantes(setup_mock_db):
 
 # Verifica que las fechas resultantes siempre estén en orden cronológico
 def test_fechas_ordenadas(setup_mock_db):
-    db, activos = setup_mock_db
+    db, activos, fecha_inicio, fecha_fin = setup_mock_db
     db.set_activo(1)
-    resultado = alinear_series_temporales(db, [activos[0]])
+    resultado = alinear_series_temporales(
+        db, [activos[0]], fecha_inicio, fecha_fin
+    )
     fechas = [x["fecha"] for x in resultado["AAPL"]]
     # Compara la lista con su versión ordenada
     assert fechas == sorted(fechas)
@@ -165,6 +177,8 @@ def test_fechas_ordenadas(setup_mock_db):
 def test_sin_datos():
     db = MockDB([], {})
     activos = [MockActivo(1, "AAPL")]
-    resultado = alinear_series_temporales(db, activos)
+    fecha_inicio = date(2020, 1, 1)
+    fecha_fin = date(2020, 1, 4)
+    resultado = alinear_series_temporales(db, activos, fecha_inicio, fecha_fin)
     # El resultado debe ser una lista vacía
     assert resultado["AAPL"] == []

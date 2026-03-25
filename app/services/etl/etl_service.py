@@ -95,8 +95,12 @@ class ETLService:
 
                 # Transformación de alineación de calendarios
                 dataset_alineado = alinear_series_temporales(
-                    db, [pa.activo for pa in portafolio.activos]
+                    db, [pa.activo for pa in portafolio.activos],
+                    fecha_inicio,
+                    fecha_fin
                 )
+
+                print(dataset_alineado)
 
                 portafolio.isETL = True
                 db.add(portafolio)
@@ -165,7 +169,7 @@ class ETLService:
 
             except ExtraccionFallidaError as e:
                 # Se captura la excepción.
-                print(f"  ❌ {e}")
+                print(f"Error: {e}")
 
             except Exception as e:
                 # Si un activo falla catastróficamente, el bucle sigue con los demás

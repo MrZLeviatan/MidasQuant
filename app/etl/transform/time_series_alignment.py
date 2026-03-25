@@ -14,20 +14,30 @@ No aplica limpieza (forward fill, interpolación, etc).
 from app.database.models import SerieTemporalRaw
 
 
-def alinear_series_temporales(db, activos):
+def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
     """
     Alinea las series temporales de múltiples activos.
 
     """
 
+    # Obtener ID de los Activos
+    activos_ids = [a.id_activo for a in activos]
+
+    if not activos_ids:
+        return {}
+
     """
-    Obtener TODAS las fechas únicas (timeline global).
+    Obtener las fechas únicas (timeline aislado).
     - Consulta a la DB para traer solo la columna 'fecha' de todos los
-        registros existentes.
+        registros del portafolio.
     - '.distinct()' elimina duplicados a nivel de SQL para que no traiga
         miles de veces la misma fecha.
     """
-    fechas = db.query(SerieTemporalRaw.fecha).distinct().all()
+    fechas = db.query(SerieTemporalRaw.fecha).filter(
+        SerieTemporalRaw.activo_id.in_(activos_ids),
+        SerieTemporalRaw.fecha >= fecha_inicio,
+        SerieTemporalRaw.fecha <= fecha_fin
+    ).distinct().all()
 
     """
     - Como SQLAlchemy devuelve una lista de tuplas [(fecha1,), (fecha2,)], usamos una
@@ -50,12 +60,15 @@ def alinear_series_temporales(db, activos):
         Traer datos del activo
         - Trae los precios de cierre y sus fechas para EL ACTIVO ACTUAL.
         - Filtra por 'id_activo' para no traer datos de otros activos.
+        - Obtiene solo en el rango de fechas del Portafolio
         """
         datos = db.query(
             SerieTemporalRaw.fecha,
             SerieTemporalRaw.close
         ).filter(
-            SerieTemporalRaw.activo_id == activo.id_activo
+            SerieTemporalRaw.activo_id == activo.id_activo,
+            SerieTemporalRaw.fecha >= fecha_inicio,
+            SerieTemporalRaw.fecha <= fecha_fin
         ).all()
 
         """
