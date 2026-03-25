@@ -7,6 +7,8 @@ Responsabilidades:
 
 from app.exceptions import TickerInvalidoError
 
+import re
+
 
 # Recibe una cadena de texto, la procesa y devuelve una lista de tickers normalizados.
 def normalizar_tickers(tickers_input: str) -> list[str]:
@@ -46,9 +48,7 @@ def normalizar_tickers(tickers_input: str) -> list[str]:
     - list(...): Convierte el diccionario de nuevo a una lista, eliminando duplicados
     pero manteniendo el orden original.
     """
-    tickers_unicos = list(dict.fromkeys(tickers_limpios))
-
-    return tickers_unicos
+    return list(dict.fromkeys(tickers_limpios))
 
 
 # Recibe un ticker y verifica si cumple con el formato esperado.
@@ -67,13 +67,16 @@ def validar_ticker_formato(ticker: str) -> None:
     if not ticker:
         raise TickerInvalidoError(ticker=ticker, motivo="Ticker vacío")
 
-    # Validar que el ticker solo contenga caracteres alfanuméricos
-    if not ticker.isalnum():
-        raise TickerInvalidoError(ticker=ticker,
-                                  motivo="Contiene caracteres no alfanuméricos")
+    # Usamos Regex para permitir letras, números, puntos y guiones
+    if not re.match(r'^[A-Z0-9.\-=]+$', ticker.upper()):
+        raise TickerInvalidoError(
+            ticker=ticker,
+            motivo="Contiene caracteres inválidos (solo se permite A-Z, 0-9, '.' y '-')"
+        )
 
-    # Validar la longitud del ticker
-    if not (1 <= len(ticker) <= 10):
-        raise TickerInvalidoError(ticker=ticker, motivo="Longitud de ticker inválida")
-
+    # Valida el tamaño del ticker.
+    if not (1 <= len(ticker) <= 12):
+        raise TickerInvalidoError(
+            ticker=ticker, motivo="Longitud fuera de rango (1-12)"
+        )
     return True

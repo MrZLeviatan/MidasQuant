@@ -25,6 +25,9 @@ def mostrar_tabla_activos(data: list[dict], nombre_portafolio: str):
     # Convierte la colección de activos en una matriz de datos (DataFrame).
     df = pd.DataFrame(data)
 
+    # Llenar valores nulos con un placeholder para que la tabla se vea limpia
+    df = df.fillna("Buscando...")
+
     # Limpieza de UI: Sustituye los nombres de las llaves técnicas por etiquetas.
     df = df.rename(columns={
         "ticker": "Ticker",
@@ -33,9 +36,12 @@ def mostrar_tabla_activos(data: list[dict], nombre_portafolio: str):
         "mercado": "Mercado"
     })
 
+    # Seleccionamos solo las columnas que queremos mostrar en el orden correcto
+    columnas_visibles = ["Ticker", "Nombre", "Tipo", "Mercado"]
+
     # Renderiza final: Muestra los datos en una tabla interactiva de solo lectura.
     st.dataframe(
-        df,
+        df[columnas_visibles],
         width="stretch",
         height=200
     )

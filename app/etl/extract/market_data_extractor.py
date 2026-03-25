@@ -40,7 +40,6 @@ from ...exceptions import (
 
 # Llamada a utilidades de validación y normalización
 from ...utils.text_utils import validar_ticker_formato
-from ...utils.date_utils import validar_rango_fechas
 
 
 class ExtractorFinanciero:
@@ -49,15 +48,14 @@ class ExtractorFinanciero:
     """
 
     def __init__(self):
-        self.headers = {
-            """
-            Se define un atributo de instancia para headers HTTP.
-            - Se simula una navegación real para evitar bloqueos por parte de las APIs.
-            - Muchas APIs bloquean request sin User-Agent
-            - El User-Agent es una técnica básica, no garantiza anonimato ni evasion
+        """
+        Se define un atributo de instancia para headers HTTP.
+        - Se simula una navegación real para evitar bloqueos por parte de las APIs.
+        - Muchas APIs bloquean request sin User-Agent
+        - El User-Agent es una técnica básica, no garantiza anonimato ni evasion
             de sistemas avanzados de detección.
-            """
-
+        """
+        self.headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                 "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -83,9 +81,6 @@ class ExtractorFinanciero:
         # VALIDACIÓN DE ENTRADA
         # Validar formato de cada ticker
         validar_ticker_formato(ticker)
-
-        # Validar fechas (orden correcto)
-        validar_rango_fechas(fecha_inicio, fecha_fin)
 
         # Acumulador de errores por fuente para trazabilidad
         errores = []
