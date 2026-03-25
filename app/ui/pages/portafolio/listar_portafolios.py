@@ -10,6 +10,9 @@ from app.services.portafolios.portafolio_service import (
     obtener_activos_de_portafolio
 )
 
+# Importación de lógica del proceso ETL
+from app.services.etl.etl_service import ETLService
+
 # Importación de componentes de UI (Capa de presentación).
 from app.ui.components.tables.tabla_portafolios import mostrar_tabla_portafolios
 from app.ui.components.tables.tabla_activos import mostrar_tabla_activos
@@ -43,7 +46,15 @@ def render():
             if activos:
                 # Crea un botón de acción para disparar la lógica de ETL.
                 if st.button("Empezar proceso ETL"):
-                    st.info("Ejecutando proceso ETL...")
+                    try:
+                        etl = ETLService()
+                        etl.ejecutar_extraccion(id_portafolio)
+
+                        st.success("Extracción Completa")
+                        st.rerun()
+
+                    except Exception as e:
+                        mostrar_error(str(e))
 
     except Exception as e:
         # Captura cualquier fallo en la cadena

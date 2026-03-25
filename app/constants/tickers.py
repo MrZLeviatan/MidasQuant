@@ -6,17 +6,10 @@ Responsabilidad:
 - Facilitar mantenimiento y actualización sin tocar el formulario.
 """
 
-# Acciones colombianas
-TICKERS_COLOMBIA = [
-    "ECOPETROL", "ISA", "GEB", "CIB", "PFBCOLOM",
-    "AVIANCA", "CEMARGOS", "PFDAVVNDA", "MINEROS", "TERPEL"
+TICKERS_REALES = [
+    "AAPL", "MSFT", "TSLA", "AMZN", "NVDA", "BRK-B",
+    "SPY", "QQQ", "VOO", "ICE",
+    "KO", "ETH-USD", "GC=F", "CL=F",
+    "ECOPETROL", "CIB", "GOOGL",
+    "META", "GEB", "ISA"
 ]
-
-# ETFs globales relevantes
-TICKERS_ETF_GLOBAL = [
-    "VOO", "CSPX", "SPY", "QQQ", "VTI",
-    "EFA", "EEM", "IWM", "GLD", "TLT"
-]
-
-# Lista completa de 20 tickers reales
-TICKERS_REALES = TICKERS_COLOMBIA + TICKERS_ETF_GLOBAL

@@ -19,22 +19,14 @@ lo cual recibiremos puros Error 403 casi siempre.
 # Librería para hacer request HTTP (consumir APIs)
 import requests
 
-# Manejo de timestamps y conversión a UNIX time
 import time
 
-# Lectura de datos en formato CSV
-import csv
-
 # Importación de librerías esenciales
-import io
-from datetime import datetime, date
+from datetime import date
 
 # Excepciones de las Fuentes
 from ...exceptions import (
-    FuenteError,
     YahooError,
-    StooqError,
-    MarketWatchError,
     ExtraccionFallidaError
 )
 
@@ -62,47 +54,69 @@ class ExtractorFinanciero:
             )
         }
 
-    # Método principal (orquestador)
+    def _preparar_ticker(self, ticker: str, fuente: str) -> str:
+        """
+        Normaliza el ticker según la fuente.
+        Para activos colombianos, añade el sufijo necesario.
+        """
+        activos_colombia = [
+            'ECOPETROL', 'GEB', 'ISA', 'BCOLOMBIA', 'PFBCOLOM', 'NUTRESA'
+        ]
+
+        t = ticker.upper()
+        if t in activos_colombia:
+            if fuente == "yahoo":
+                return f"{t}.CL"
+        return t
+
     def extraer(self, ticker: str, fecha_inicio: date, fecha_fin: date):
         """
         Orquestador principal de extracción de datos financieros.
-        - Itera secuencialmente sobre una lista de motores de extracción
-        - Facilidad en agregar nuevas fuentes
-        - Implementación de failover
+        Versión simplificada:
+        - Se utiliza exclusivamente Yahoo Finance como fuente de datos.
+        - Se elimina el failover para reducir complejidad y mejorar trazabilidad.
 
-        Complejidad: O(n) por la iteración en los diferentes motores
+        Flujo:
+        1. Validar ticker
+        2. Preparar ticker para Yahoo
+        3. Ejecutar extracción
+        4. Validar datos OHLCV
+        5. Retornar datos limpios
+
+        Complejidad: O(n), dominada por la iteración de los datos retornados
         """
-        fuentes = [
-            self._motor_yahoo,
-            self._motor_stooq,
-            self._motor_marketwatch
-        ]
-
         # VALIDACIÓN DE ENTRADA
-        # Validar formato de cada ticker
         validar_ticker_formato(ticker)
 
-        # Acumulador de errores por fuente para trazabilidad
-        errores = []
+        try:
+            # Preparar ticker específicamente para Yahoo
+            ticker_preparado = self._preparar_ticker(ticker, "yahoo")
 
-        # Iteración secuencial sobre motores
-        for motor in fuentes:
-            try:
-                # Ejecutar el motor actual
-                datos = motor(ticker, fecha_inicio, fecha_fin)
-                # Validación de resultado no vacío
-                if datos:
-                    datos = OHLCVValidador.validar(datos)
-                    if datos:
-                        return datos
+            # Ejecutar extracción
+            datos = self._motor_yahoo(ticker_preparado, fecha_inicio, fecha_fin)
 
-            # Captura errores de dominio sin interrumpir el flujo
-            except FuenteError as e:
-                errores.append(str(e))
-        # Manda la excepción si hay mas de un error posible
-        raise ExtraccionFallidaError(ticker, errores)
+            # Validar resultado no vacío
+            if not datos:
+                raise ExtraccionFallidaError(ticker, ["Yahoo retornó datos vacíos"])
 
-    # --- MOTORES INTERNOS ---
+            # Validación de integridad OHLCV
+            datos_validados = OHLCVValidador.validar(datos)
+
+            if not datos_validados:
+                raise ExtraccionFallidaError(
+                    ticker,
+                    ["Datos inválidos después de validación OHLCV"]
+                )
+
+            return datos_validados
+
+        except YahooError as e:
+            # Error específico de Yahoo
+            raise ExtraccionFallidaError(ticker, [str(e)])
+
+        except Exception as e:
+            # Fallback defensivo
+            raise ExtraccionFallidaError(ticker, [f"Error inesperado: {str(e)}"])
 
     # Motor Yahoo Finance
     def _motor_yahoo(self, ticker, f_inicio, f_fin):
@@ -197,171 +211,6 @@ class ExtractorFinanciero:
         except Exception as e:
             # Encapsulación del error en excepción de dominio
             raise YahooError(ticker, e)
-
-    # Motor Stooq
-    def _motor_stooq(self, ticker, f_inicio, f_fin):
-        """
-        Motor de extracción de datos históricos desde Stooq
-        - Utiliza el endpoint de Stooq que retorna datos en formato CSV
-        (Muy bueno para índices globales). Normaliza las columnas y filas
-        a formato OHLCV.
-
-        Complejidad: O(n), debido a las iteraciones en el CSV
-        """
-        try:
-            # Convierte el ticker a minúsculas / si no tiene sufijo lo agrega
-            stooq_ticker = ticker.lower() if "." in ticker else f"{ticker.lower()}.us"
-
-            """
-            Constructor de la URL con:
-            - s= ticker
-            - d1= fecha inicio
-            - d2= fecha fin
-            - i=d = intervalo diario
-
-            El strftime convierte la fecha en el formato requerido por Stooq
-            """
-            d1 = f_inicio.strftime('%Y%m%d')
-            d2 = f_fin.strftime('%Y%m%d')
-            url = f"https://stooq.com/q/d/l/?s={stooq_ticker}&d1={d1}&d2={d2}&i=d"
-
-            # Hacer petición GET con el header, entre otras cosas
-            res = requests.get(url, headers=self.headers, timeout=10)
-            # Valida respuesta HTTP
-            res.raise_for_status()
-
-            # Validador de respuesta vacía
-            if not res.text.strip():
-                return []
-
-            # Conversión CSV a diccionario Python
-            lector = csv.DictReader(io.StringIO(res.text))
-
-            data = []
-
-            # Itera sobre cada fila del CSV
-            for fila in lector:
-                try:
-                    # Se obtiene precio de cierre
-                    close = fila.get("Close")
-
-                    # Filtrar datos inválidos
-                    if not close:
-                        continue
-
-                    # Normalización para datos OHLCV
-                    data.append({
-                        "fecha": datetime.strptime(fila['Date'], '%Y-%m-%d').date(),
-                        "open": float(fila.get("Open") or 0),
-                        "high": float(fila.get("High") or 0),
-                        "low": float(fila.get("Low") or 0),
-                        "close": float(close),
-                        "volumen": float(fila.get("Volume") or 0)
-                    })
-
-                # Manejo de datos corruptos
-                except (ValueError, TypeError):
-                    continue  # skip datos corruptos
-
-            return data
-
-        # Encapsulación del error en excepción de dominio
-        except Exception as e:
-            raise StooqError(ticker, e)
-
-    # Motor MarketWatch
-    def _motor_marketwatch(self, ticker, f_inicio, f_fin):
-        """
-        Motor de extracción desde MarketWatch (implementación parcial / placeholder)
-        - Utiliza el endpoint de MarketWatch que retorna datos en formato HTML/CSV
-        y se normaliza a formato OHLCV.
-        - Ejemplo de 'Scraping ético' manual de MarketWatch.
-
-        Complejidad: O(n) por la iteración en su número de registros
-        """
-        try:
-
-            # Marketwatch usa una estructura de URL para histórico fácil de predecir
-            url = f"https://www.marketwatch.com/investing/stock/{ticker}/download-data"
-            # Parámetros requeridos por MarketWatch
-            params = {
-                "startDate": f_inicio.strftime('%m/%d/%Y'),
-                "endDate": f_fin.strftime('%m/%d/%Y'),
-            }
-
-            # Request HTTP
-            res = requests.get(
-                url,
-                params=params,
-                headers=self.headers,
-                timeout=10
-            )
-
-            # Validación HTTP
-            res.raise_for_status()
-
-            content = res.text.strip()
-
-            # Validación de contenido vacío
-            if not content:
-                return []
-
-            # Detección de formato (HTML y CSV)
-            # Si contiene tags HTML -> probablemente bloqueado o página web
-            if "<html" in content.lower():
-                raise MarketWatchError(ticker, "Respuesta en HTML, posible bloqueo")
-
-            # Conversión del CSV en memoria
-            lector = csv.DictReader(io.StringIO(res.text))
-
-            # Validación de columnas esperadas
-            columnas_esperadas = {"Date", "Open", "High", "Low", "Close", "Volume"}
-
-            # Lector de encabezado del CSV
-            if not lector.fieldnames:
-                raise MarketWatchError(ticker, "CSV sin encabezados")
-
-            # Obtención de columnas recibidas de la petición
-            columnas_recibidas = set(lector.fieldnames)
-
-            # Comparación de columnas
-            if not columnas_esperadas.issubset(columnas_recibidas):
-                raise MarketWatchError(
-                    ticker,
-                    f"Estructura inesperada. Columnas recibidas: {columnas_recibidas}"
-                )
-
-            data = []
-
-            # Iteración sobre cada fila del CSV
-            for fila in lector:
-                try:
-                    # Validación mínima
-                    close = fila.get("Close")
-
-                    # Filtrar datos inválidos
-                    if not close:
-                        continue
-
-                    # Construcción del registro normalizado
-                    data.append({
-                        "fecha": datetime.strptime(fila["Date"], "%m/%d/%Y").date(),
-                        "open": float(fila.get("Open") or 0),
-                        "high": float(fila.get("High") or 0),
-                        "low": float(fila.get("Low") or 0),
-                        "close": float(close),
-                        "volumen": float(fila.get("Volume") or 0)
-                    })
-
-                # Manejo de datos corruptos
-                except (ValueError, TypeError, KeyError):
-                    continue
-
-            return data
-
-        except Exception as e:
-            # Encapsulación en excepción de dominio
-            raise MarketWatchError(ticker, e)
 
 
 # Validador OHLCV
