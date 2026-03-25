@@ -24,6 +24,9 @@ from app.etl.extract.market_data_extractor import ExtractorFinanciero
 # Importación de la lógica de extracción de metadatos
 from app.etl.extract.asset_metadata_extractor import AssetMetadataExtractor
 
+# Importación de la lógica para la Alineación de Calendarios bursátiles
+from app.etl.transform.time_series_alignment import alinear_series_temporales
+
 # Importación de excepciones personalizadas.
 from ...exceptions import (
     RecursoNoEncontrado,
@@ -84,8 +87,15 @@ class ETLService:
             if tasa_exito >= 0.8:
 
                 fecha_inicio, fecha_fin = self._obtener_fechas(portafolio)
+
+                # Se ejecuta la extracción de la Series Temporales
                 self.ejecutar_fase_series_temporales(
                     db, portafolio, fecha_inicio, fecha_fin
+                )
+
+                # Transformación de alineación de calendarios
+                dataset_alineado = alinear_series_temporales(
+                    db, [pa.activo for pa in portafolio.activos]
                 )
 
                 portafolio.isETL = True
