@@ -1,3 +1,12 @@
+<h1 align="center">
+
+_MidasQuant - Proyecto Análisis de Algoritmos_
+
+![Python](https://img.shields.io/badge/python-3.11+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) ![Streamlit](https://img.shields.io/badge/Streamlit-%23FE4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)
+
+</h1>
+
+
 ## MidasQuant - Módulo ETL
 
 Este módulo implementa el proceso ETL (Extract, Transform, Load) para el análisis de activos financieros dentro del proyecto MidasQuant,encargandose de orquestar la obtención de datos desde múltiples fuentes públicas, aplicar procesos de validación y normalización, y estructurar la información en formatos consistentes para su posterior análisis.  
