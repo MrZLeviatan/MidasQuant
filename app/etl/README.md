@@ -278,7 +278,7 @@ Datos listos para análisis cuantitativo
 # Posibles mejoras para las siguientes entregas
 
 * Implementar cache de respuestas
-* Añadir más fuentes (Alpha Vantage, Polygon)
+* Añadir más fuentes
 * Paralelizar extracción
 * Mejorar detección de anomalías (ML)
 * Agregar imputación de datos faltantes
