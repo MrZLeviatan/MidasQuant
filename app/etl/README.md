@@ -21,7 +21,7 @@ Su objetivo es:
 
 ---
 
-# Estructura del módulo
+## Estructura del módulo
 
 - **etl/**
   - **extract/**
@@ -33,23 +33,23 @@ Su objetivo es:
 
 ---
 
-# 1. EXTRACT (Extracción de datos)
+### 1. EXTRACT (Extracción de datos)
 
 Esta capa se encarga de obtener información desde APIs externas sin depender de librerías como `yfinance`.
 
 ---
 
-## 1.1 AssetMetadataExtractor
+### 1.1 AssetMetadataExtractor
 
 `asset_metadata_extractor.py`
 
-El cua extrae metadatos de activos financieros como:
+El cual extrae metadatos de activos financieros como:
 
 * Nombre
 * Tipo de activo
 * Mercado
 
-### Características clave
+## Características clave
 
 **Failover (tolerancia a fallos)**
   Usa múltiples fuentes:
@@ -71,7 +71,7 @@ El cua extrae metadatos de activos financieros como:
 }
 
 
-### Complejidad
+## Complejidad
 
 * `buscar_en_cascada`: **O(k)** (k = número de fuentes)
 * Cada motor: **O(1)**
@@ -90,7 +90,7 @@ Extrae datos históricos financieros (OHLCV):
 * Close
 * Volume
 
-### Características clave
+## Características clave
 
 * Validación de ticker
 * Normalización por mercado (ej: activos colombianos)
@@ -99,7 +99,7 @@ Extrae datos históricos financieros (OHLCV):
 
 ---
 
-### Flujo de extracción
+## Flujo de extracción
 
 1. Validar ticker
 2. Preparar ticker
@@ -110,7 +110,7 @@ Extrae datos históricos financieros (OHLCV):
 
 ---
 
-### Formato de salida
+## Formato de salida
 
 [
     {
@@ -139,13 +139,13 @@ Reglas:
 
 Ordena los datos cronológicamente
 
-### Complejidad
+## Complejidad
 
 * **O(n log n)** (por ordenamiento)
 
 ---
 
-# 2. TRANSFORM (Transformación de datos)
+## 2. TRANSFORM (Transformación de datos)
 
 Esta capa no extrae datos, los procesa y mejora su calidad.
 
@@ -169,7 +169,7 @@ Cada activo tiene fechas distintas → imposible comparar directamente.
 
 ---
 
-### Entrada
+## Entrada
 
 * DB session
 * Lista de activos
@@ -177,13 +177,13 @@ Cada activo tiene fechas distintas → imposible comparar directamente.
 
 ---
 
-### Salida
+## Salida
 
 <pre> json { "AAPL": [ { "fecha": "YYYY-MM-DD", "valor": 123.45 }, { "fecha": "YYYY-MM-DD", "valor": null } ], "TSLA": [ { "fecha": "YYYY-MM-DD", "valor": 250.10 } ] } </pre>
 
 ---
 
-### Complejidad
+## Complejidad
 
 * Construcción timeline: **O(n log n)**
 * Alineación: **O(n × m)**
@@ -200,7 +200,7 @@ Su función principal es identificar problemas en las series temporales, como da
 
 ---
 
-### Qué detecta
+## Qué detecta
 
 * Datos nulos (gaps)
 * Precios inválidos (≤ 0)
@@ -208,7 +208,7 @@ Su función principal es identificar problemas en las series temporales, como da
 
 ---
 
-### Métricas generadas
+## Métricas generadas
 
 {
     "total_registros": int,
@@ -220,9 +220,9 @@ Su función principal es identificar problemas en las series temporales, como da
 
 ---
 
-### Diagnóstico
+## Diagnóstico
 
-Clasifica cada activo:
+Clasifica cada activo según la calidad de sus datos, considerando la proporción de valores faltantes y comportamientos anómalos detectados en la serie temporal:
 
 | Estado     | Condición      |
 | ---------- | -------------- |
@@ -232,13 +232,13 @@ Clasifica cada activo:
 
 ---
 
-### Salida completa
+## Salida completa
 
 <pre> json id="8zddf7" { "AAPL": { "serie": [ { "fecha": "YYYY-MM-DD", "valor": 123.45 } ], "calidad": { "total_registros": 100, "pct_nulos": 0.05, "pct_invalidos": 0.01, "pct_anomalias": 0.08 }, "diagnostico": { "estado_calidad": "ACEPTABLE" } } } </pre>
 
 ---
 
-### Complejidad
+## Complejidad
 
 * **O(n²)** (comparaciones de variación)
 
@@ -247,7 +247,7 @@ En escenarios con múltiples activos o grandes volúmenes de datos históricos, 
 
 ---
 
-# Flujo completo del ETL
+## Flujo completo del ETL
 
 ```text
 EXTRACT
@@ -265,7 +265,7 @@ Datos listos para análisis cuantitativo
 
 ---
 
-# Características del diseño
+## Características del diseño
 
 * Arquitectura modular
 * Bajo acoplamiento
@@ -276,7 +276,7 @@ Datos listos para análisis cuantitativo
 
 ---
 
-# Limitaciones
+## Limitaciones
 
 * Uso de APIs públicas (posibles bloqueos o rate limits)
 * Dependencia de Yahoo Finance
@@ -284,7 +284,7 @@ Datos listos para análisis cuantitativo
 
 ---
 
-# Posibles mejoras para las siguientes entregas
+## Posibles mejoras para las siguientes entregas
 
 * Implementar cache de respuestas
 * Añadir más fuentes
