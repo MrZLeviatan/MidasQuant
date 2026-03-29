@@ -9,7 +9,7 @@ _MidasQuant - Proyecto Análisis de Algoritmos_
 
 ## MidasQuant - Módulo ETL
 
-Este módulo implementa el proceso ETL (Extract, Transform, Load) para el análisis de activos financieros dentro del proyecto MidasQuant,encargandose de orquestar la obtención de datos desde múltiples fuentes públicas, aplicar procesos de validación y normalización, y estructurar la información en formatos consistentes para su posterior análisis.  
+En este módulo se implementa el proceso ETL (Extract, Transform, Load) para el análisis de activos financieros dentro del proyecto MidasQuant,encargandose de dirigir la obtención de datos desde múltiples fuentes públicas, aplicar procesos de validación y normalización, y estructurar la información en formatos consistentes para su posterior análisis.  
 
 El diseño del módulo sigue principios de bajo acoplamiento, tolerancia a fallos y separación de responsabilidades, permitiendo que cada etapa del ETL (extracción y transformación) funcione de manera independiente y escalable.  
 
@@ -128,7 +128,7 @@ Extrae datos históricos financieros (OHLCV):
 
 ## 1.3 OHLCVValidador
 
-Valida los datos extraídos:
+Se encarga de validar los datos extraídos:
 
 Reglas:
 
@@ -159,7 +159,7 @@ Permite sincronizar múltiples activos en una misma línea de tiempo.
 
 ### Problema que resuelve
 
-Cada activo tiene fechas distintas → imposible comparar directamente.
+Cada activo tiene fechas distintas que sería imposible comparar directamente.
 
 ### Solución:
 
@@ -195,16 +195,16 @@ Cada activo tiene fechas distintas → imposible comparar directamente.
 
 `auditor_calidad.py`
 
-Analiza la calidad de los datos sin modificarlos, actuando como una capa de validación posterior a la transformación.  
+Se encarga de analizar la calidad de los datos sin modificarlos, actuando como una capa de validación posterior a la transformación.  
 Su función principal es identificar problemas en las series temporales, como datos faltantes, valores inválidos o comportamientos anómalos, permitiendo evaluar si la información es confiable antes de ser utilizada en modelos de análisis cuantitativo.
 
 ---
 
 ## Qué detecta
 
-* Datos nulos (gaps)
+* Datos nulos 
 * Precios inválidos (≤ 0)
-* Anomalías (>30% cambio diario)
+* Anomalías (> 30% cambio diario)
 
 ---
 
@@ -222,12 +222,12 @@ Su función principal es identificar problemas en las series temporales, como da
 
 ## Diagnóstico
 
-Clasifica cada activo según la calidad de sus datos, considerando la proporción de valores faltantes y comportamientos anómalos detectados en la serie temporal:
+Se clasifica cada activo según la calidad de sus datos, considerando la proporción de valores faltantes y comportamientos anómalos detectados en la serie temporal:
 
 | Estado     | Condición      |
 | ---------- | -------------- |
-| DEFICIENTE | >20% nulos     |
-| RIESGOSO   | >10% anomalías |
+| DEFICIENTE | > 20% nulos     |
+| RIESGOSO   | > 10% anomalías |
 | ACEPTABLE  | Caso contrario |
 
 ---
@@ -242,7 +242,7 @@ Clasifica cada activo según la calidad de sus datos, considerando la proporció
 
 * **O(n²)** (comparaciones de variación)
 
-Esta complejidad se debe a que, además de recorrer la serie de datos, se realizan comparaciones entre valores consecutivos para detectar cambios bruscos (anomalías).  
+Esta complejidad se debe a que, además de recorrer la serie de datos, se realizan comparaciones entre valores consecutivos para detectar cambios bruscos o anomalías.  
 En escenarios con múltiples activos o grandes volúmenes de datos históricos, este proceso puede volverse costoso, ya que el número de operaciones crece rápidamente con el tamaño de la serie.
 
 ---
@@ -289,5 +289,5 @@ Datos listos para análisis cuantitativo
 * Implementar cache de respuestas
 * Añadir más fuentes
 * Paralelizar extracción
-* Mejorar detección de anomalías (ML)
+* Mejorar detección de anomalías
 * Agregar imputación de datos faltantes
