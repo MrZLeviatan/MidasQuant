@@ -1,5 +1,5 @@
 """
-Módulo de transformación para alineación de series temporales.
+Módulo de transformación para alineación de series temporales (HU07)
 
 Responsabilidad:
 - Construir una línea temporal común (master timeline)
@@ -18,6 +18,7 @@ def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
     """
     Alinea las series temporales de múltiples activos.
 
+    Complejidad: O(n^2) por las iteraciones anidadas.
     """
 
     # Obtener ID de los Activos
@@ -41,8 +42,8 @@ def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
 
     """
     - Como SQLAlchemy devuelve una lista de tuplas [(fecha1,), (fecha2,)], usamos una
-    "comprensión de conjunto" {f[0] for f in fechas} para extraer el valor y asegurar
-    unicidad.
+        "comprensión de conjunto" {f[0] for f in fechas} para extraer el valor y
+        asegurar unicidad.
     - Luego 'sorted()' ordena cronológicamente (de más antigua a más reciente).
 
     Convertimos [(fecha,), (fecha,)...] → set → lista ordenada
@@ -60,11 +61,10 @@ def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
         Traer datos del activo
         - Trae los precios de cierre y sus fechas para EL ACTIVO ACTUAL.
         - Filtra por 'id_activo' para no traer datos de otros activos.
-        - Obtiene solo en el rango de fechas del Portafolio
+        - Se trae el objeto completo (SerieTemporalRaw)
         """
         datos = db.query(
-            SerieTemporalRaw.fecha,
-            SerieTemporalRaw.close
+            SerieTemporalRaw
         ).filter(
             SerieTemporalRaw.activo_id == activo.id_activo,
             SerieTemporalRaw.fecha >= fecha_inicio,
@@ -76,12 +76,10 @@ def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
         - Transforma la lista de la DB en un mapa (Hash Map).
         - Esto es clave para el rendimiento: permite preguntar
             "¿Qué precio hubo en esta fecha?" y obtener la respuesta
-            instantáneamente sin buscar en toda la lista.
+            instantáneamente sin buscar en toda la lista.'
+        - Mapeo de fechas -> Objeto Completo
         """
-        mapa_fechas = {
-            fecha: close
-            for fecha, close in datos
-        }
+        mapa_datos = {obj.fecha: obj for obj in datos}
 
         # Lista temporal para guardar la serie de tiempo completa y "rellenada"
         serie_alineada = []
@@ -93,12 +91,13 @@ def alinear_series_temporales(db, activos, fecha_inicio, fecha_fin):
             -.get(fecha,None) intenta obtener el precio; si no existe en esa fecha,
                 devuelve None.
             """
-            valor = mapa_fechas.get(fecha, None)
+            obj_raw = mapa_datos.get(fecha)
 
             # Agrega un diccionario con la fecha y el valora la lista del activo.
             serie_alineada.append({
                 "fecha": fecha,
-                "valor": valor
+                "valor": obj_raw.close if obj_raw else None,
+                "obj_sql": obj_raw
             })
         # Guarda la lista en el diccionario principal usando el Ticker como clave.
         resultado[activo.ticker] = serie_alineada

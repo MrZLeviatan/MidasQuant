@@ -6,16 +6,24 @@ Responsabilidades:
 - Preparar la configuración base para el proceso ETL
 """
 
+# Tipos de datos para anotaciones
+from typing import Dict, Any, Optional
+
 # Sesión de base de datos
 from ...database.connection import SessionLocal
 from sqlalchemy.exc import IntegrityError
 # Utilizado para joined en relación de métodos
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, Session
 
 
 # Excepciones específicas del dominio
-from ...exceptions import MinimoActivosError
-from ...exceptions import NombreDuplicadoError
+from ...exceptions import (
+    AppError,
+    BDError,
+    MinimoActivosError,
+    NombreDuplicadoError,
+    RecursoNoEncontradoError,
+)
 
 # Llamada a los modelos ORM
 from ...database.models import (
@@ -27,30 +35,41 @@ from ...database.models import (
 
 # Llamada a utilidades de validación y normalización
 from ...utils.text_utils import normalizar_tickers, validar_ticker_formato
-from ...utils.date_utils import validar_rango_fechas, validar_horizonte_minimo
-
+from ...utils.date_utils import (
+    validar_rango_fechas, validar_horizonte_minimo, validar_fecha_futura
+)
 # Librerías estándar
-from datetime import date, datetime
+from datetime import date
 
 
-# Función principal del servicio para crear un portafolio completo
 def crear_portafolio_completo(
     nombre_portafolio: str,
     tickers_input: str,
     fecha_inicio: date,
     fecha_fin: date,
-    db=None
-):
+    db: Optional[Session] = None
+) -> Dict[str, Any]:
     """
     Crea un portafolio completo con sus activos y configuración de análisis.
+
+    Reglas de negocio:
+    - El portafolio debe tener al menos 20 activos.
+    - El horizonte temporal debe ser de al menos 5 años.
+    - El formato de los tickers debe ser válido (solo letras, números y guiones).
+    - El nombre del portafolio debe ser único.
+    - Al crear el portafolio, se crean los activos (si no existen) y las relaciones
+        correspondientes (la configuración).
+
+    Retorna: Un diccionario con la información del portafolio creado.
 
     Complejidad: O(n) por la iteración sobre las listas en ciclos.
     """
 
-    # 1. NORMALIZACIÓN DE TICKERS: Convierte el string en lista limpia
+    # 1. Normalización de Tickers: Convierte el string en lista limpia
     tickers = normalizar_tickers(tickers_input)
 
-    # 2. VALIDACIONES DE NEGOCIO
+    # 2. Validaciones de negocio
+
     # Validar que haya al menos 20 activos
     if len(tickers) < 20:
         raise MinimoActivosError(minimo=20, actual=len(tickers))
@@ -59,18 +78,27 @@ def crear_portafolio_completo(
     for ticker in tickers:
         validar_ticker_formato(ticker)
 
+    # Valida que la fecha_fin no sobrepase la fecha actual.
+    validar_fecha_futura(fecha_fin)
+
     # Validar fechas (orden correcto)
     validar_rango_fechas(fecha_inicio, fecha_fin)
 
     # Validar horizonte mínimo de 5 años
     validar_horizonte_minimo(fecha_inicio, fecha_fin, min_anios=5)
 
-    # Crear sesión de base de datos transaccional
-    # Si no se proporciona una sesión, se crea una nueva
+    """
+    3. Gestión de base de datos
+    - Crea una sesión de bd transaccional
+    - Si no se proporciona una sesión, se crea una nueva (para Tests)
+    - Se crea una bandera para poder saber si toca cerrar la bd.
+    """
+    local_session = False
     if db is None:
         db = SessionLocal()
+        local_session = True
 
-    # 3. OBTENER O CREAR ACTIVOS
+    # 4. Obtener o Crear Activos
     try:
         # Lista para almacenar los objetos Activo que se usarán en el portafolio
         activos_db = []
@@ -85,28 +113,27 @@ def crear_portafolio_completo(
             # (Se completa la información luego en ETL)
             if not activo:
                 activo = Activo(
-                    ticker=ticker,
-                    nombre=None,
-                    tipo_activo=None,
-                    mercado=None
+                    ticker=ticker
                 )
                 # Agregar el nuevo activo a la sesión pero no hacer commit aún
                 db.add(activo)
-                db.flush()  # Permite obtener el ID sin hacer commit
+                # Permite obtener el ID sin hacer commit
+                db.flush()
 
             # Agregar a la lista de activos para el portafolio
             activos_db.append(activo)
 
-        # 4. CREAR PORTAFOLIO
+        # 4. Crear Portafolio
         portafolio = Portafolio(
             nombre=nombre_portafolio,
-            fecha_creacion=datetime.now()
         )
         # Agregar el portafolio a la sesión pero no hacer commit aún
         db.add(portafolio)
-        db.flush()  # Obtener ID del portafolio sin hacer commit
+        # Obtener ID del portafolio sin hacer commit
+        db.flush()
 
-        # 5. CREAR RELACIONES ACTIVO-PORTAFOLIO
+        # 5. Crear Relación Activo-Portafolio
+
         # Para cada activo, crear una relación con el portafolio
         for activo in activos_db:
             relacion = PortafolioActivo(
@@ -116,7 +143,7 @@ def crear_portafolio_completo(
             # Agregar la relación a la sesión pero no hacer commit aún
             db.add(relacion)
 
-        # 6. CREAR CONFIGURACIÓN DE ANÁLISIS
+        # 6. Crear configuración de análisis para el portafolio
         # Esta configuración se usará luego para el proceso ETL, análisis y benchmarking
         configuracion = ConfiguracionAnalisis(
             portafolio_id=portafolio.id_portafolio,
@@ -126,11 +153,11 @@ def crear_portafolio_completo(
         # Agregar la configuración a la sesión pero no hacer commit aún
         db.add(configuracion)
 
-        # 7. CONFIRMAR TRANSACCIÓN
+        # 7. Confirmar la transacción
         # Si todo ha ido bien hasta aquí, se confirma la transacción con un commit a BD
         db.commit()
 
-        # 8. RESPUESTA DEL SERVICIO
+        # 8. Respuesta del Servicio
         # Preparar la respuesta con la información del portafolio creado
         return {
             "portafolio_id": portafolio.id_portafolio,
@@ -140,24 +167,32 @@ def crear_portafolio_completo(
             "fecha_fin": fecha_fin
         }
 
-    # Manejo de errores específicos de integridad (como nombre de portafolio duplicado)
+    # Manejo de errores específicos de integridad
     except IntegrityError:
         db.rollback()
+        # Se llama a la excepción personalizada
         raise NombreDuplicadoError(nombre_portafolio=portafolio.nombre)
 
-    # Si ocurre cualquier error durante el proceso, se captura la excepción
-    except Exception as e:
-        # Si ocurre un error, revertir cambios
+    except AppError:
+        # Si ya es una de nuestras excepciones, la dejamos pasar tal cual
         db.rollback()
-        raise e
+        raise
+
+    except Exception as e:
+        db.rollback()
+        # Cualquier error no controlado lo envolvemos en un BDError genérico
+        raise BDError(
+            message="Error inesperado al persistir el portafolio",
+            detail=str(e)
+        )
 
     # Siempre cerrar la sesión de base de datos al finalizar el proceso
     finally:
-        # Cerrar la sesión siempre
-        db.close()
+        if local_session:
+            # Cerrar la sesión siempre
+            db.close()
 
 
-# Función para obtener un Portafolio mediante su Id
 def obtener_portafolio_con_relaciones(db, portafolio_id: int):
     """
     Obtiene el portafolio mediante su ID con las relaciones de:
@@ -167,7 +202,7 @@ def obtener_portafolio_con_relaciones(db, portafolio_id: int):
     Complejidad: O(1) Gracias a joinedload se resuelve la búsqueda en una sola
     """
     # Inicia la construcción de la consulta sobre la entidad 'Portafolio'
-    return db.query(Portafolio).options(
+    portafolio_relaciones = db.query(Portafolio).options(
         # Realiza un SQL Join para traer los activos vinculados al portafolio
         # a través de la tabla intermedia (PortafolioActivos) y el objeto Activo final
         joinedload(Portafolio.activos).joinedload(PortafolioActivo.activo),
@@ -179,13 +214,24 @@ def obtener_portafolio_con_relaciones(db, portafolio_id: int):
         # Retorna el primer objeto encontrado o 'None' si no existe el registro.
     ).first()
 
+    # Si no se encuentra el portafolio, se lanza una excepción
+    if not portafolio_relaciones:
+        raise RecursoNoEncontradoError(
+            recurso="Portafolio",
+            identificador=portafolio_id
+        )
 
-# Función para obtener todos los portafolios con su configuración (Usado en comboBox).
+    # Retorna el Portafolio con sus Relaciones (Activos y Configuración)
+    return portafolio_relaciones
+
+
 def obtener_todos_los_portafolios():
     """
-    Obtiene lista de portafolios con su configuración para el combobox.
+    # Función para obtener todos los portafolios con su configuración
+        (Usado en comboBox).
 
-    Complejidad: O(n) por la iteración sobre los portafolios y sus activos.
+    Complejidad: O(n^2) por la iteración sobre los portafolios y luego sobre
+        los tickers de los Activos asociados al portafolio.
     """
     # Crear sesión de base de datos
     db = SessionLocal()
@@ -217,15 +263,15 @@ def obtener_todos_los_portafolios():
                 "fecha_inicio": conf.fecha_inicio if conf else date(2015, 1, 5),
                 "fecha_fin": conf.fecha_fin if conf else date(2026, 3, 20)
             })
+        # Retornar la lista completa de portafolios con su configuración y tickers
         return lista_portafolios
     finally:
         db.close()
 
 
-# Función para obtener un resumen de todos los portafolios (Usado en Tablas).
 def obtener_resumen_portafolios():
     """
-    Obtiene información resumida de portafolios para visualización en tabla.
+    Obtiene información resumida de portafolios para visualización en Tabla.
 
     Complejidad: O(n) por los Joinedload y el bucle de procesamiento.
     """
@@ -240,7 +286,7 @@ def obtener_resumen_portafolios():
         - .options(joinedload(...)): Realiza un "JOIN" en SQL para traer la
             configuración de análisis en la misma consulta, evitando consultar
             la BD dentro del bucle.
-        # - .all(): Ejecuta la consulta y trae todos los registros a memoria.
+        - .all(): Ejecuta la consulta y trae todos los registros a memoria.
         """
         portafolios = db.query(Portafolio).options(
             joinedload(Portafolio.configuracion)
@@ -270,21 +316,20 @@ def obtener_resumen_portafolios():
         db.close()
 
 
-# Función para obtener los activos de un Portafolio mediante su Id.
 def obtener_activos_de_portafolio(portafolio_id: int):
     """
-    Obtiene los activos asociados a un portafolio.
+    Obtiene los activos asociados a un portafolio mediante su ID.
 
     Regla de negocio:
-    - Si el ETL no se ha ejecutado → solo mostrar ticker
-    - Si ETL ya se ejecutó → mostrar todos los campos
+    - Si el ETL no se ha ejecutado: Solo mostrar ticker
+    - Si ETL ya se ejecutó: Mostrar todos los campos
 
     Complejidad: O(n) por los Joinedload y el bucle de activos.
     """
     # Abre una nueva sesión de conexión con la BD,
     db = SessionLocal()
 
-    # Parsear de String a int (Pasa con el Streamlit)
+    # Parsear de String a int (Error raro con el Streamlit)
     portafolio_id = int(portafolio_id)
 
     try:
@@ -298,12 +343,17 @@ def obtener_activos_de_portafolio(portafolio_id: int):
             joinedload(Portafolio.activos).joinedload(PortafolioActivo.activo)
         ).filter(Portafolio.id_portafolio == portafolio_id).first()
 
+        # Si no se encuentra el portafolio, se lanza una excepción
         if not portafolio:
-            return []
+            raise RecursoNoEncontradoError(
+                recurso="Portafolio",
+                identificador=portafolio_id
+            )
 
         # Construcción del resultado usando la relación definida en el modelo.
-        # Navegamos: Portafolio -> PortafolioActivo (pa) -> Activo (pa.activo)
         resultado = []
+
+        # Definimos una bandera para saber si el portafolio ya pasó por ETL o no
         is_etl_ready = portafolio.isETL
 
         # Iteramos sobre cada activo del portafolio
@@ -320,7 +370,9 @@ def obtener_activos_de_portafolio(portafolio_id: int):
                 "mercado": activo.mercado if is_etl_ready else ""
             })
 
+        # Retorna la lista de Activos asociados al Portafolio
         return resultado
+
     # Liberación de la conexión al pool.
     finally:
         db.close()

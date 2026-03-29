@@ -7,6 +7,7 @@ sin necesidad de conocer la estructura interna del paquete.
 
 # Base de las excepciones
 from app.exceptions.base_exceptions import (
+    AppError,
     BDError,
     DominioError,
     FuenteError
@@ -16,42 +17,44 @@ from app.exceptions.base_exceptions import (
 # Excepciones relacionadas a las reglas del dominio
 from app.exceptions.dominio_exceptions import (
     RangoFechasError,
+    RangoFechaFinError,
     HorizonteInvalidoError,
     TickerInvalidoError,
-    ListaTickersVaciaError,
-    MinimoActivosError
+    MinimoActivosError,
 )
 
 
 # Excepciones relacionadas al manejo de la BD
 from app.exceptions.database_exceptions import (
     NombreDuplicadoError,
-    RecursoNoEncontrado
+    RecursoNoEncontradoError
 )
 
 # Excepciones relacionadas a las fuentes de extracción
 from app.exceptions.fuentes_exceptions import (
     YahooError,
     StooqError,
-    MarketWatchError,
     ExtraccionFallidaError
 )
 
 
-# Definición de la API pública del módulo
+"""
+El __all__ ayuda a que cuando alguien haga 'from app.exceptions import *'
+    solo importe lo que tú quieres.
+"""
 __all__ = [
+    "AppError",
     "DominioError",
     "BDError",
     "FuenteError",
     "RangoFechasError",
     "HorizonteInvalidoError",
     "TickerInvalidoError",
-    "ListaTickersVaciaError",
     "MinimoActivosError",
     "NombreDuplicadoError",
     "YahooError",
     "StooqError",
-    "MarketWatchError",
     "ExtraccionFallidaError",
-    "RecursoNoEncontrado"
+    "RecursoNoEncontradoError",
+    "RangoFechaFinError"
 ]

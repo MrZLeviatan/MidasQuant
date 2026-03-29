@@ -6,23 +6,41 @@ Responsabilidad:
 - Homogeneizar UX
 """
 
-# Importaciones necesarias para el componente
 import streamlit as st
+# Se importa el time para manejos de temporización de mensajes
 import time
 
 
-# Funciones para mostrar mensajes de error o éxito en la interfaz
-def mostrar_error(mensaje: str, segundos: int = 6):
+def mostrar_error(mensaje_o_error: str | dict, segundos: int = 8):
     """
-    Muestra un mensaje de error en la interfaz.
+    Muestra un error en la UI.
+    Si recibe un dict (de AppError), formatea el mensaje y los detalles técnicos.
     """
-    placeholder = st.empty()  # Crear un placeholder para el mensaje
-    placeholder.error(mensaje)  # Mostrar el mensaje de error
-    time.sleep(segundos)  # Esperar el tiempo especificado
-    placeholder.empty()  # Limpiar el mensaje después de mostrarlo
+    # Creamos un contenedor vacío para poder borrarlo después
+    placeholder = st.empty()
+
+    if isinstance(mensaje_o_error, dict):
+        # Extraemos la info de nuestro formato estándar
+        msg = mensaje_o_error.get("message", "Error desconocido")
+        code = mensaje_o_error.get("code", "ERROR")
+        detail = mensaje_o_error.get("detail", "")
+
+        # Agrupamos los elementos visuales dentro del placeholder
+        with placeholder.container():
+            st.error(f"**{code}:** {msg}")
+            # Si hay detalles técnicos (ej. un stacktrace), se ocultan en un expander
+            if detail:
+                with st.expander("Ver detalles técnicos"):
+                    st.json(detail)
+    else:
+        # Si es solo un texto, usamos el formato estándar de error de Streamlit
+        placeholder.error(mensaje_o_error)
+    # Pausa la ejecución para que el usuario pueda leer
+    time.sleep(segundos)
+    # Elimina el contenido del contenedor, limpiando la UI
+    placeholder.empty()
 
 
-# Función para mostrar mensajes de éxito
 def mostrar_exito(mensaje: str, segundos: int = 4):
     """
     Muestra un mensaje de éxito en la interfaz.
@@ -30,4 +48,5 @@ def mostrar_exito(mensaje: str, segundos: int = 4):
     placeholder = st.empty()
     placeholder.success(mensaje)
     time.sleep(segundos)
-    placeholder.empty()  # Limpia el mensaje después de los segundos
+    # Limpia el mensaje después de los segundos
+    placeholder.empty()

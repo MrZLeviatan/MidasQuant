@@ -1,17 +1,16 @@
 """
-Este módulo implementa la extracción de datos históricos de activos financieros mediante
-(OHLCV: Open, High, Low, Close, Volume) desde múltiples fuentes públicas sin depender de
-librerías especializadas de alto nivel como yfinance.
+Extractor de Datos de Mercado (HU05)
 
-El diseño sigue un enfoque de:
-- Tolerancia a fallos (failover): intenta múltiples proveedores en orden de prioridad.
-- Bajo acoplamiento: cada fuente está encapsulada en métodos independientes.
-- Normalización de datos: los motores retornan una estructura de lista de diccionarios
+Responsabilidad:
+- Extraer datos históricos de activos financieros (OHLCV) desde Yahoo Finance.
+- Validar la integridad de los datos extraídos
+- Reintento de 3 veces con backoff exponencial para errores
+    temporales (timeouts, rate limits)
 
 Notas:
 - No se usa Google Finance pues dejo de tener API pública oficial.
 - No se usa Investing.com porque tiene una protección anti-bots agresiva,
-lo cual recibiremos puros Error 403 casi siempre.
+    lo cual recibiremos puros Error 403 casi siempre.
 - SEC (EDGAR) no entrega el OHLCV
 - BVC no tiene una API REST abierta y gratuita para históricos.
 """
@@ -24,10 +23,13 @@ import time
 # Importación de librerías esenciales
 from datetime import date
 
+from typing import List
+
 # Excepciones de las Fuentes
 from ...exceptions import (
     YahooError,
-    ExtraccionFallidaError
+    ExtraccionFallidaError,
+    FuenteError
 )
 
 # Llamada a utilidades de validación y normalización
@@ -58,6 +60,8 @@ class ExtractorFinanciero:
         """
         Normaliza el ticker según la fuente.
         Para activos colombianos, añade el sufijo necesario.
+
+        Complejidad: O(1) por acceso directo a lista y operaciones de string
         """
         activos_colombia = [
             'ECOPETROL', 'GEB', 'ISA', 'BCOLOMBIA', 'PFBCOLOM', 'NUTRESA'
@@ -72,59 +76,108 @@ class ExtractorFinanciero:
     def extraer(self, ticker: str, fecha_inicio: date, fecha_fin: date):
         """
         Orquestador principal de extracción de datos financieros.
-        Versión simplificada:
-        - Se utiliza exclusivamente Yahoo Finance como fuente de datos.
-        - Se elimina el failover para reducir complejidad y mejorar trazabilidad.
 
         Flujo:
         1. Validar ticker
         2. Preparar ticker para Yahoo
-        3. Ejecutar extracción
+        3. Ejecutar extracción (3 intentos)
         4. Validar datos OHLCV
         5. Retornar datos limpios
 
-        Complejidad: O(n), dominada por la iteración de los datos retornados
+        Complejidad: O(n^2), dominada por la iteración de los datos retornados
+            y la complejidad del método de Yahoo.
         """
         # VALIDACIÓN DE ENTRADA
         validar_ticker_formato(ticker)
+
+        # Para listar errores
+        errores_acumulados: List[FuenteError] = []
 
         try:
             # Preparar ticker específicamente para Yahoo
             ticker_preparado = self._preparar_ticker(ticker, "yahoo")
 
-            # Ejecutar extracción
-            datos = self._motor_yahoo(ticker_preparado, fecha_inicio, fecha_fin)
+            # Lista para almacenar datos sin procesar de la extracción
+            datos_raw = []
+
+            # Códigos de error que se consideran para el reintento
+            RETRYABLE_CODES = {"TIMEOUT", "RATE_LIMIT", "HTTP_ERROR"}
+
+            for intento in range(1, 4):  # Intentar hasta 3 veces
+                try:
+                    # Ejecutar extracción
+                    datos_raw = self._motor_yahoo(
+                        ticker_preparado, fecha_inicio, fecha_fin
+                    )
+                    break
+
+                # Manejo de errores específicos de Yahoo
+                except YahooError as e:
+                    errores_acumulados.append(e)
+
+                    # No reintentar errores lógicos
+                    if e.code not in RETRYABLE_CODES:
+                        raise e
+
+                    # Estrategia de backoff exponencial simple
+                    if intento < 3:
+                        time.sleep(2 * intento)
+                    else:
+                        raise e
 
             # Validar resultado no vacío
-            if not datos:
-                raise ExtraccionFallidaError(ticker, ["Yahoo retornó datos vacíos"])
+            if not datos_raw:
+                raise FuenteError(
+                    fuente="Yahoo Finance",
+                    etapa="extraction",
+                    message=f"No hay datos históricos para {ticker} en este rango.",
+                    detail="La API retornó una lista vacía.",
+                    code="DATOS_NO_ENCONTRADOS"
+                )
 
             # Validación de integridad OHLCV
-            datos_validados = OHLCVValidador.validar(datos)
+            datos_validados = OHLCVValidador.validar(datos_raw)
 
             if not datos_validados:
-                raise ExtraccionFallidaError(
-                    ticker,
-                    ["Datos inválidos después de validación OHLCV"]
+                raise FuenteError(
+                    fuente="Yahoo Finance",
+                    etapa="validation",
+                    message="Los datos obtenidos están corruptos o incompletos.",
+                    detail="Validación OHLCV falló para todos los registros.",
+                    code="DATOS_INVALIDOS"
                 )
 
             return datos_validados
 
         except YahooError as e:
-            # Error específico de Yahoo
-            raise ExtraccionFallidaError(ticker, [str(e)])
+            # Error específico del motor Yahoo
+            errores_acumulados.append(e)
+            raise ExtraccionFallidaError(ticker, errores_acumulados)
+
+        except FuenteError as e:
+            # Errores de lógica (sin datos o datos corruptos)
+            errores_acumulados.append(e)
+            raise ExtraccionFallidaError(ticker, errores_acumulados)
 
         except Exception as e:
-            # Fallback defensivo
-            raise ExtraccionFallidaError(ticker, [f"Error inesperado: {str(e)}"])
+            # Error de infraestructura o bug no controlado
+            error_genérico = FuenteError(
+                fuente="ExtractorFinanciero",
+                etapa="orchestration",
+                message="Error crítico en el motor de extracción.",
+                detail=str(e),
+                code="INTERNAL_EXTRACTOR_ERROR"
+            )
+            errores_acumulados.append(error_genérico)
+            raise ExtraccionFallidaError(ticker, errores_acumulados)
 
     # Motor Yahoo Finance
     def _motor_yahoo(self, ticker, f_inicio, f_fin):
         """
         Motor de extracción de datos históricos desde Yahoo Finance.
         - Utiliza el endpoint de Yahoo que retorna datos en formato JSON.
-        Convierte un rango de fechas a timestamps UNIX y normaliza la respuesta
-        a formato OHLCV.
+        - Convierte un rango de fechas a timestamps UNIX y normaliza la respuesta
+            a formato OHLCV.
 
         Complejidad: O(n), debido a las iteraciones en los timestamps devueltos
         """
@@ -153,30 +206,44 @@ class ExtractorFinanciero:
                 url,
                 params=params,
                 headers=self.headers,
-                timeout=10  # evita bloqueos indefinidos
+                timeout=12  # evita bloqueos indefinidos
             )
 
-            # Validación de respuesta HTTP (lanza HTTPError si status != 200)
-            res.raise_for_status()
+            # Manejo de Rate Limit
+            if res.status_code == 429:
+                raise YahooError(
+                    ticker=ticker,
+                    etapa="request",
+                    message="Yahoo limitó la conexión (429).",
+                    detail="Rate Limit",
+                    code="RATE_LIMIT"
+                )
+
+            # Error HTTP generales
+            if res.status_code != 200:
+                raise YahooError(
+                    ticker=ticker,
+                    etapa="request",
+                    message="No se pudo obtener datos históricos desde Yahoo.",
+                    detail=f"HTTP {res.status_code}",
+                    code="HTTP_ERROR"
+                )
 
             # Conversión de la respuesta JSON a diccionario Python
-            json_data = res.json()
+            data = res.json()
 
             # Validaciones defensivas (evita KeyError)
-            chart = json_data.get("chart", {})
-            result = chart.get("result")
+            result = data.get("chart", {}).get("result")
 
             # Si no hay datos, retorna vacío
             if not result:
                 return []
 
-            # Navegación de la estructura interna del JSON
+            # Desestructuración del JSON de Yahoo
             # 'chart' → 'result' → lista → primer elemento
             res_0 = result[0]
-
             # Extracción de timestamps (puede no existir → fallback a lista vacía)
             tamps = res_0.get('timestamp', [])
-
             # Extracción de datos OHLCV dentro de 'indicators'
             quotes = res_0.get("indicators", {}).get('quote', [{}])[0]
 
@@ -208,12 +275,20 @@ class ExtractorFinanciero:
 
             return data
 
+        except requests.Timeout:
+            raise YahooError(
+                ticker, "request",
+                "Yahoo tardó demasiado en responder.", "Timeout", "TIMEOUT"
+            )
         except Exception as e:
-            # Encapsulación del error en excepción de dominio
-            raise YahooError(ticker, e)
+            if isinstance(e, YahooError):
+                raise e
+            raise YahooError(
+                ticker, "parse",
+                "Error procesando el JSON de Yahoo.", str(e), "JSON_PARSE_ERROR"
+            )
 
 
-# Validador OHLCV
 class OHLCVValidador:
     """
     Validador de integridad de datos financieros OHLCV.
@@ -227,7 +302,7 @@ class OHLCVValidador:
 
     # Método puro
     @staticmethod
-    def validar(data: list[dict]) -> list[dict]:
+    def validar(data: List[dict]) -> List[dict]:
         """
         Valida y limpia una lista de registros OHLCV.
         Retorna: Lista limpia y validada

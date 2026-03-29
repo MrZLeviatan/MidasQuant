@@ -91,7 +91,10 @@ class Portafolio(Base):
     # Relación con activos (N:M)
     activos = relationship("PortafolioActivo", back_populates="portafolio")
 
-    # Relación con configuraciones
+    """
+    uselist: Esto transforma una relación común en una Relación Uno a Uno (1:1).
+    """
+    # Relación con configuraciones del portafolio
     configuracion = relationship(
         "ConfiguracionAnalisis", back_populates="portafolio", uselist=False
     )
@@ -132,12 +135,14 @@ class ConfiguracionAnalisis(Base):
 
     id_configuracion = Column(Integer, primary_key=True, index=True)
 
+    # FK hacia Portafolio
     portafolio_id = Column(
         Integer, ForeignKey("portafolio.id_portafolio"), unique=True, nullable=False)
 
     fecha_inicio = Column(Date, nullable=False)
     fecha_fin = Column(Date, nullable=False)
 
+    # Cada configuración esta asociado (1:1) a un Portafolio
     portafolio = relationship("Portafolio", back_populates="configuracion")
 
 
@@ -155,6 +160,7 @@ class SerieTemporalRaw(Base):
 
     activo_id = Column(Integer, ForeignKey("activo.id_activo"), index=True)
 
+    # Datos mínimos de la Series Temporal (se pueden agregar más)
     fecha = Column(Date, index=True)
     open = Column(Float)
     high = Column(Float)
@@ -166,7 +172,7 @@ class SerieTemporalRaw(Base):
     __table_args__ = (
         UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_raw"),
     )
-
+    # Relación (N:1) a un Activo ( un activo puede tener varias series Raw)
     activo = relationship("Activo", back_populates="precios_raw")
 
 
@@ -184,10 +190,11 @@ class SerieTemporalLimpia(Base):
 
     id_serie = Column(Integer, primary_key=True, index=True)
 
+    # FK hacia el Activo
     activo_id = Column(Integer, ForeignKey("activo.id_activo"), index=True)
 
+    # Datos mínimos de la Series Temporal (se pueden agregar más)
     fecha = Column(Date, index=True)
-
     open = Column(Float)
     high = Column(Float)
     low = Column(Float)
@@ -201,7 +208,7 @@ class SerieTemporalLimpia(Base):
     __table_args__ = (
         UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_limpia"),
     )
-
+    # Relación (N:1) a un Activo ( un activo puede tener varias series Limpias)
     activo = relationship("Activo", back_populates="precios_limpios")
 
 
@@ -209,17 +216,29 @@ class SerieTemporalLimpia(Base):
 class RegistroLimpieza(Base):
     """
     Registro de transformaciones aplicadas durante la limpieza de datos.
+
+    Contiene:
+    - Que se hizo y porque en los datos (para tomarlos como limpios)
+    - Puntero a ambas series de tiempos (Raw y Limpias)
     """
     __tablename__ = "registro_limpieza"
 
     id_registro = Column(Integer, primary_key=True, index=True)
 
+    # FK hacia el Activo (Rendimiento ante la búsqueda de datos Raw en un Activo)
     activo_id = Column(Integer, ForeignKey("activo.id_activo"))
 
-    # Relación opcional con dato limpio específico
+    # Relación con la serie limpia (a la que se le hizo el proceso)
     serie_limpia_id = Column(Integer, ForeignKey("serie_temporal_limpia.id_serie"))
 
-    fecha = Column(Date, index=True)
+    # Relación con la serie raw (a la que se le hará el proceso)
+    serie_raw_id = Column(Integer, ForeignKey("serie_temporal_raw.id_serie"))
+
+    # El "cuando" relación a los datos de la serie
+    fecha_dato = Column(Date, index=True)
+
+    #  El "cuándo" se hizo el proceso ETL
+    fecha_registro = Column(DateTime, default=datetime.now)
 
     # Tipo de problema detectado, Ej: missing_value, outlier, inconsistencia
     tipo_problema = Column(String)
@@ -230,15 +249,10 @@ class RegistroLimpieza(Base):
     valor_original = Column(Float)
     valor_final = Column(Float)
 
-    # Ej: interpolación_lineal, z_score
-    metodo = Column(String)
-
-    # Justificación (clave para el proyecto)
+    # Justificación
     justificacion = Column(String)
 
-    timestamp_procesamiento = Column(DateTime, default=datetime)
-
-    # Relaciones
+    # Relaciones para navegar fácilmente
     activo = relationship("Activo")
-
     serie_limpia = relationship("SerieTemporalLimpia", back_populates="registros_limp")
+    serie_raw = relationship("SerieTemporalRaw")

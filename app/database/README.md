@@ -168,19 +168,19 @@ A continuación se describen las principales entidades del sistema.
 7. `Registro_Limpieza`
    Registro de transformaciones aplicadas durante la limpieza de datos.
 
-| Atributo                | Tipo        | ¿Por qué existe?                      |
-| ----------------------- | ----------- | ------------------------------------- |
-| id_registro             | Entero (PK) | Identificador único                   |
-| id_activo               | Entero (FK) | Relación con el activo                |
-| id_serie_limpia         | Entero (FK) | Relación con la serie temporal limpia |
-| fecha                   | Fecha       | Referencia temporal                   |
-| tipo_problema           | Texto       | Tipo de problema identificado         |
-| accion_aplicada         | Texto       | Acción tomada ante el problema        |
-| valor_original          | Decimal     | Precio antes de la limpieza           |
-| valor_final             | Decimal     | Precio posterior al proceso ETL       |
-| metodo                  | Texto       | Metodo usado para la acción tomada    |
-| justificación           | Texto       | Justificación ante la acción tomada   |
-| timestamp_procesamiento | DataTime    | Tiempo que se demora el proceso ETL   |
+| Atributo        | Tipo        | ¿Por qué existe?                      |
+| --------------- | ----------- | ------------------------------------- |
+| id_registro     | Entero (PK) | Identificador único                   |
+| id_activo       | Entero (FK) | Relación con el activo                |
+| id_serie_limpia | Entero (FK) | Relación con la serie temporal limpia |
+| id_serie_raw    | Entero (FK) | Relación con la serie temporal raw    |
+| fecha_datos     | Fecha       | Referencia temporal                   |
+| fecha_registro  | Fecha       | Cuando se hizo el registro            |
+| tipo_problema   | Texto       | Tipo de problema identificado         |
+| accion_aplicada | Texto       | Acción tomada ante el problema        |
+| valor_original  | Decimal     | Precio antes de la limpieza           |
+| valor_final     | Decimal     | Precio posterior al proceso ETL       |
+| justificación   | Texto       | Justificación ante la acción tomada   |
 
 <br>
 
@@ -191,7 +191,7 @@ A continuación se describen las principales entidades del sistema.
 El siguiente diagrama representa la estructura lógica de la base de datos, incluyendo entidades, atributos y relaciones.
 
 <p align="left">
-    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774391822/Modelo_Entidad-Relaci%C3%B3n_ERD_ppnt1q.jpg" alt="Modelo ERD"/>
+    <img src="https://res.cloudinary.com/dehltwwbu/image/upload/v1774663902/Modelo_Entidad-Relaci%C3%B3n_ERD_l3apam.jpg" alt="Modelo ERD"/>
 </p>
 
 ### Relaciones
@@ -202,7 +202,8 @@ El siguiente diagrama representa la estructura lógica de la base de datos, incl
 - Un **activo** puede pertenecer a múltiples portafolios a través de **portafolio_activo** (N:M)
 - Un **portafolio** contiene una configuración única (1:1)
 - Un **registro de limpieza** pertenece a un solo activo (N:1)
-- Un **registro de limpieza** puede estar asociado a un registro de serie_temporal_limpia (N:1)
+- Un **registro de limpieza** esta asociado a un registro de serie_temporal_limpia (N:1)
+- Un **registro de limpieza** esta asociado a un registro de serie_temporal_raw (N:1)
 
 <br>
 
@@ -229,12 +230,6 @@ La base de datos se inicializa al ejecutar el comando local:
 
 ```bash
 python -m streamlit run app/main.py
-```
-
-Pero si se desea creara de forma manual, se puede ejecutar el comando:
-
-```bash
-python database/init_db.py
 ```
 
 Este proceso:

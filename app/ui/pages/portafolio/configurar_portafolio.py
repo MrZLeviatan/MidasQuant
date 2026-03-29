@@ -1,5 +1,5 @@
 """
-Página de configuración de portafolio (HU01).
+Página de configuración de portafolio (HU04).
 
 Responsabilidades:
 - Renderizar el formulario de entrada de datos
@@ -20,12 +20,7 @@ from app.ui.components.feedback.alerts import mostrar_error, mostrar_exito
 from app.services.portafolios.portafolio_service import crear_portafolio_completo
 
 # Excepciones del dominio
-from app.exceptions import (
-    MinimoActivosError,
-    RangoFechasError,
-    HorizonteInvalidoError,
-    TickerInvalidoError
-)
+from app.exceptions import AppError
 
 
 # Punto de entrada de la página
@@ -40,10 +35,13 @@ def render():
     4. Maneja resultados o errores
     """
 
-    # ENCABEZADO DE LA PÁGINA
-    st.header("Registro de nueva configuración de Portafolio")
+    # Encabezado de la página
+    st.header("Gestión de Portafolio")
+
+    # 1. Inicialización del estado (Session State)
 
     # Limpieza (Debe ir antes del formulario)
+    # Se asegura de que todas las llaves existan para evitar KeyErrors
     if "registrado" not in st.session_state:
         st.session_state["registrado"] = False
 
@@ -52,24 +50,19 @@ def render():
         limpiar_formulario()
 
     # ASEGURAR EXISTENCIA (Si es la primera vez que carga la app)
-    if "nombre" not in st.session_state:
-        st.session_state["nombre"] = ""
-    if "tickers" not in st.session_state:
-        st.session_state["tickers"] = ""
-    if "fecha_inicio" not in st.session_state:
-        st.session_state["fecha_inicio"] = date(2015, 1, 5)
-    if "fecha_fin" not in st.session_state:
-        st.session_state["fecha_fin"] = date(2026, 3, 20)
-    if "registrado" not in st.session_state:
-        st.session_state["registrado"] = False
+    _asegurar_estado_inicial()
 
     """
+    2. Renderización de Inputs
+
     Se utiliza un componente reutilizable para capturar los datos.
     Esto evita duplicación de código y mejora mantenibilidad.
     """
     nombre, tickers, fecha_inicio, fecha_fin = form_portafolio()
 
     """
+    3. Botones de Acción
+
     Botones de acción en columna para mejor UX.
     st.column permite organizar los botones horizontalmente.
     """
@@ -84,55 +77,68 @@ def render():
         st.button("Limpiar Formulario", type="primary", on_click=limpiar_formulario)
 
     """
+    4. Lógica de Negocio / Procesamiento
+
     El botón controla cuándo se ejecuta la lógica.
     Evita ejecuciones automáticas en cada cambio de input.
     """
     if btn_registrar:
 
-        # VALIDACIÓN DE FORMULARIO
-        errores = []
+        # Validación de Formulario
 
         # Validar que el nombre no esté vacío
         if not st.session_state.nombre.strip():
-            errores.append("El nombre del portafolio es obligatorio.")
-
-        # Si hay errores, se muestran y se detiene la ejecución
-        if errores:
-            for e in errores:
-                mostrar_error(e)
-            # Detiene la ejecución si hay errores
+            mostrar_error("El nombre del portafolio es obligatorio.")
             return
 
         # Llamada al backend con try/except para manejar errores del dominio
         try:
+            # Spinner para dar feedback visual de que algo está pasando
+            with st.spinner("Procesando y validando activos..."):
+                # Llamada al Backend (Service)
+                crear_portafolio_completo(
+                    nombre_portafolio=nombre,
+                    tickers_input=tickers,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin
+                )
 
-            # LLAMADA AL BACKEND
-            crear_portafolio_completo(
-                nombre_portafolio=nombre,
-                tickers_input=tickers,
-                fecha_inicio=fecha_inicio,
-                fecha_fin=fecha_fin
-            )
-
-            mostrar_exito("Portafolio creado correctamente")
-
+            # Si llega aquí, todo salió bien
+            mostrar_exito(f"Portafolio: '{nombre}' creado correctamente")
             # Marcar que ya se registró
             st.session_state["registrado"] = True
             # Rerun para limpiar el formulario
             st.rerun()
 
-        # MANEJO DE ERRORES DEL DOMINIO
-        except (MinimoActivosError, RangoFechasError,
-                HorizonteInvalidoError, TickerInvalidoError) as e:
-            mostrar_error(str(e))
+        # Manejo de Errores del Dominio
+        except AppError as e:
+            # Capturamos cualquier error de nuestro dominio y lo pasamos al diccionario
+            mostrar_error(e.to_dict())
 
         except Exception as e:
-            # Captura cualquier otro error inesperado
-            mostrar_error(f"Error inesperado: {str(e)}")
+            # Error técnico no controlado
+            mostrar_error(f"Error crítico del sistema: {str(e)}")
 
 
-# Limpieza automática del formulario
+def _asegurar_estado_inicial():
+    """
+    Helper para evitar polución visual en el render.
+    """
+    keys_defaults = {
+        "nombre": "",
+        "tickers": "",
+        "fecha_inicio": date(2015, 1, 5),
+        "fecha_fin": date(2026, 3, 20)
+    }
+    for key, val in keys_defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = val
+
+
 def limpiar_formulario():
+    """"
+    Limpia los campos del formulario y resetea el estado.
+    """
     st.session_state["nombre"] = ""
     st.session_state["tickers"] = ""
     st.session_state["fecha_inicio"] = date(2015, 1, 5)

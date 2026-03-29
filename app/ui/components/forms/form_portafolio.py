@@ -7,17 +7,17 @@ Responsabilidad:
 """
 # Importaciones de librerías
 import streamlit as st
-from datetime import timedelta
 
+# Importación de los Tickers quemados
 from app.constants.tickers import TICKERS_REALES
 
+# Importación del servicio para obtener portafolios existentes
 from app.services.portafolios.portafolio_service import obtener_todos_los_portafolios
 
 
-# Carga los datos del Portafolio seleccionado en el comboBox
 def cargar_configuracion_previa():
     """
-    Callback para cargar datos del portafolio seleccionado.
+    Callback para cargar datos del portafolio seleccionado (en el comboBox).
     """
     # Se obtiene el objeto seleccionado del Session State
     seleccion = st.session_state["selector_portafolio"]
@@ -31,13 +31,9 @@ def cargar_configuracion_previa():
         st.session_state["fecha_fin"] = seleccion["fecha_fin"]
 
 
-# Formulario específico para portafolio
 def form_portafolio():
     """
-    Renderizar inputs del formulario y retorna los valores.
-    Incluye botón para autocompletar 20 tickers.
-
-    Complejidad: O(1) - No depende de la cantidad de datos.
+    Renderizar los componentes visuales del formulario para el registro del Portafolio.
     """
 
     # Nombre del portafolio
@@ -79,8 +75,11 @@ def form_portafolio():
     st.text_area(
         "Activos / Tickers (separados por coma, mínimo 20)",
         placeholder="AAPL, MSFT, GOOGL, TSLA...",
-        key="tickers"
+        key="tickers",
+        help="Ingrese los símbolos bursátiles separados por comas."
     )
+
+    # Lógica de Fechas con Restricción de Negocio (5 años mínimo)
 
     # Input de fecha de inicio
     fecha_inicio = st.date_input(
@@ -88,11 +87,21 @@ def form_portafolio():
         key="fecha_inicio"
     )
 
-    # Input de fecha fin, mínimo permitido: fecha inicio + 5 años
+    # Calcular dinámico del límite superior de fecha fin (mínimo 5 años después)
+    min_fecha_fin = sumar_5_anios(fecha_inicio)
+
+    # Si no existe en session_state, inicializar
+    if "fecha_fin" not in st.session_state:
+        st.session_state["fecha_fin"] = min_fecha_fin
+
+    # Validación de consistencia: evita que fecha_fin sea menor al mínimo permitido
+    if st.session_state["fecha_fin"] < min_fecha_fin:
+        st.session_state["fecha_fin"] = min_fecha_fin
+
+    # Render del input ya consistente
     st.date_input(
         "Fecha fin (mínimo 5 años de diferencia con fecha inicio)",
-        # Calculamos el mínimo para la fecha fin dinámicamente
-        min_value=fecha_inicio + timedelta(days=5 * 366),
+        min_value=min_fecha_fin,
         key="fecha_fin"
     )
 
@@ -103,3 +112,16 @@ def form_portafolio():
         st.session_state["fecha_inicio"],
         st.session_state["fecha_fin"]
     )
+
+
+def sumar_5_anios(fecha):
+    """
+    Suma 5 años a una fecha dada, manejando casos de años bisiestos.
+    - Si la fecha es 29 de febrero, se ajusta a 28 de febrero
+    """
+    try:
+        # Intenta cambiar el año sumándole 5 al actual
+        return fecha.replace(year=fecha.year + 5)
+    except ValueError:
+        # Si la fecha es 29 de febrero, se ajusta a 28 de febrero
+        return fecha.replace(month=2, day=28, year=fecha.year + 5)

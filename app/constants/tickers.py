@@ -11,5 +11,5 @@ TICKERS_REALES = [
     "SPY", "QQQ", "VOO", "ICE",
     "KO", "ETH-USD", "GC=F", "CL=F",
     "ECOPETROL", "CIB", "GOOGL",
-    "META", "GEB", "ISA"
+    "META", "GEB", "AMD"
 ]

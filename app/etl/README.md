@@ -1,249 +1,222 @@
 <h1 align="center">
 
-_MidasQuant - Proyecto Análisis de Algoritmos_
-
-![Python](https://img.shields.io/badge/python-3.11+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) ![Streamlit](https://img.shields.io/badge/Streamlit-%23FE4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)
+_MidasQuant - ETL (Extra, Transform, Load)_
 
 </h1>
 
-
-## MidasQuant - Módulo ETL
-
-En este módulo se implementa el proceso ETL (Extract, Transform, Load) para el análisis de activos financieros dentro del proyecto MidasQuant,encargandose de dirigir la obtención de datos desde múltiples fuentes públicas, aplicar procesos de validación y normalización, y estructurar la información en formatos consistentes para su posterior análisis.  
-
-El diseño del módulo sigue principios de bajo acoplamiento, tolerancia a fallos y separación de responsabilidades, permitiendo que cada etapa del ETL (extracción y transformación) funcione de manera independiente y escalable.  
+Este módulo implementa el proceso ETL (Extract, Transform, Load) para el análisis de activos financieros dentro del proyecto **MidasQuant**, encargándose de orquestar la obtención de datos desde múltiples fuentes públicas, aplicar procesos de validación y normalización, y estructurar la información en formatos consistentes para su posterior análisis.
 
 Su objetivo es:
 
-* Extraer datos financieros desde fuentes externas
-* Transformarlos en estructuras limpias y consistentes
-* Prepararlos para análisis cuantitativo
+- Extraer datos financieros desde fuentes externas
+- Transformarlos en estructuras limpias y consistentes
+- Prepararlos para análisis cuantitativo
+
+<br>
+
+## Tabla de Contenido
+
+- [Tabla de Contenido](#tabla-de-contenido)
+- [Estructura del Módulo](#estructura-del-módulo)
+  - [1. etl/extract](#1-etlextract)
+    - [1.1 /asset_metadata_extractor.py](#11-asset_metadata_extractorpy)
+    - [1.2 /market_data_extractor.py](#12-market_data_extractorpy)
+  - [2. etl/transform](#2-etltransform)
+    - [2.1 /time_series_alignment.py](#21-time_series_alignmentpy)
+    - [2.2 /quality_audit.py](#22-quality_auditpy)
+    - [2.3 data_imputation.py](#23-data_imputationpy)
+- [Flujo completo del ETL](#flujo-completo-del-etl)
+- [Consideraciones de Diseñó](#consideraciones-de-diseñó)
+- [Limitaciones](#limitaciones)
 
 ---
 
-## Estructura del módulo
+## Estructura del Módulo
 
-- **etl/**
-  - **extract/**
-    - asset_metadata_extractor.py
-    - extractor_financiero.py
-  - **transform/**
-    - alineador_series.py
-    - auditor_calidad.py
+El módulo de ETL está compuesto por los siguientes directorios y archivos:
 
----
+### 1. [etl/extract](./extract/)
 
-### 1. EXTRACT (Extracción de datos)
+Esta capa se encarga de obtener información desde APIs externas sin depender de librerías como `yfinance`. Representa la extracción en todo el proceso ETL.
 
-Esta capa se encarga de obtener información desde APIs externas sin depender de librerías como `yfinance`.
+<br>
 
----
+#### 1.1 [/asset_metadata_extractor.py](./extract/asset_metadata_extractor.py)
 
-### 1.1 AssetMetadataExtractor
+Encargado de la extracción de metadatos de los activos financieros mediante su **Ticker**.
 
-`asset_metadata_extractor.py`
+**Responsabilidades:**
 
-El cual extrae metadatos de activos financieros como:
+- Dado un ticker, buscar su información en múltiples fuentes en cascada
+  (Yahoo Search, Stooq, Yahoo Quote).
+- Normalizar la información obtenida en un formato consistente (`Nombre, Tipo Activo y Mercado`).
+- Manejar errores específicos de cada fuente y acumularlos para reportar fallos detallados.
+- Implementar una estrategia de failover para garantizar
+  la máxima resiliencia ante bloqueos o fallos de proveedores.
 
-* Nombre
-* Tipo de activo
-* Mercado
+**Formato De Salida:**
 
-## Características clave
-
-**Failover (tolerancia a fallos)**
-  Usa múltiples fuentes:
-
-  1. Yahoo Search
-  2. Stooq
-  3. Yahoo Quote
-
-**Bajo acoplamiento**
-  Cada fuente está separada en métodos independientes (`_motor_*`)
-
-**Normalización**
-  Siempre retorna:
-
-{
-    "nombre": str,
-    "tipo_activo": str,
-    "mercado": str
-}
-
-
-## Complejidad
-
-* `buscar_en_cascada`: **O(k)** (k = número de fuentes)
-* Cada motor: **O(1)**
-
----
-
-## 1.2 ExtractorFinanciero
-
-`extractor_financiero.py`
-
-Extrae datos históricos financieros (OHLCV):
-
-* Open
-* High
-* Low
-* Close
-* Volume
-
-## Características clave
-
-* Validación de ticker
-* Normalización por mercado (ej: activos colombianos)
-* Uso directo de API de Yahoo (sin librerías externas)
-* Manejo de errores robusto
-
----
-
-## Flujo de extracción
-
-1. Validar ticker
-2. Preparar ticker
-3. Llamar API de Yahoo
-4. Procesar JSON
-5. Validar datos
-6. Retornar lista limpia
-
----
-
-## Formato de salida
-
+```JSON
 [
-    {
-        "fecha": date,
-        "open": float,
-        "high": float,
-        "low": float,
-        "close": float,
-        "volumen": float
-    }
+  {
+    "nombre": str,
+    "TipoActivo": str,
+    "Mercado": str
+  }
 ]
+```
 
+<br>
 
----
+#### 1.2 [/market_data_extractor.py](./extract/market_data_extractor.py)
 
-## 1.3 OHLCVValidador
+Encargado de la extracción de los datos de series temporales financieras de los Activos mediante su **Ticker**.
 
 Se encarga de validar los datos extraídos:
 
-Reglas:
+**Responsabilidades:**
 
-* low ≤ open ≤ high
-* low ≤ close ≤ high
-* volumen ≥ 0
-* sin fechas duplicadas
+- Extraer datos históricos de activos financieros (OHLCV) desde Yahoo Finance.
+- Validar la integridad de los datos extraídos
+- Reintento de 3 veces con backoff exponencial para errores
+  temporales (timeouts, rate limits)
 
-Ordena los datos cronológicamente
+**Formato de Salida:**
 
-## Complejidad
+```JSON
+[
+  {
+    "fecha": date,
+    "open": float,
+    "high": float,
+    "low": float,
+    "close": float,
+    "volumen": float
+  }
+]
+```
 
-* **O(n log n)** (por ordenamiento)
+<br>
 
----
+### 2. [etl/transform](./transform/)
 
-## 2. TRANSFORM (Transformación de datos)
+Esta capa se encarga de la manipulación, auditoria, limpieza y transformación de los datos financieros anteriormente extraídos. Pertenece al proceso de Transformación del proceso ETL.
 
-Esta capa no extrae datos, los procesa y mejora su calidad.
+**Esta capa no extrae datos, los procesa y mejora su calidad.**
 
----
+<br>
 
-## 2.1 Alineador de Series Temporales
+#### 2.1 [/time_series_alignment.py](./transform/time_series_alignment.py)
 
-`alineador_series.py`
+Encargado de alinear todos los datos de series temporales de los Activos en un calendario bursátil con el fin de alinear correctamente los datos de los Activos para futuros análisis.
 
-Permite sincronizar múltiples activos en una misma línea de tiempo.
+**Responsabilidades:**
 
-### Problema que resuelve
+- Construir una línea temporal común (**master timeline**)
+- Alinear múltiples activos sobre esa línea
+- Marcar datos faltantes como None
 
-Cada activo tiene fechas distintas que sería imposible comparar directamente.
+No realiza persistencia, ni aplica limpieza (forward fill, interpolación, etc).
 
-### Solución:
+**Formato de Salida:**
 
-* Construye una **línea de tiempo maestra**
-* Alinea todos los activos a esas fechas
-* Usa `None` cuando faltan datos
-
----
-
-## Entrada
-
-* DB session
-* Lista de activos
-* Fecha inicio / fin
-
----
-
-## Salida
-
-<pre> json { "AAPL": [ { "fecha": "YYYY-MM-DD", "valor": 123.45 }, { "fecha": "YYYY-MM-DD", "valor": null } ], "TSLA": [ { "fecha": "YYYY-MM-DD", "valor": 250.10 } ] } </pre>
-
----
-
-## Complejidad
-
-* Construcción timeline: **O(n log n)**
-* Alineación: **O(n × m)**
-  (n fechas, m activos)
-
----
-
-## 2.2 Auditor de Calidad
-
-`auditor_calidad.py`
-
-Se encarga de analizar la calidad de los datos sin modificarlos, actuando como una capa de validación posterior a la transformación.  
-Su función principal es identificar problemas en las series temporales, como datos faltantes, valores inválidos o comportamientos anómalos, permitiendo evaluar si la información es confiable antes de ser utilizada en modelos de análisis cuantitativo.
-
----
-
-## Qué detecta
-
-* Datos nulos 
-* Precios inválidos (≤ 0)
-* Anomalías (> 30% cambio diario)
-
----
-
-## Métricas generadas
-
+```JSON
 {
-    "total_registros": int,
-    "pct_nulos": float,
-    "pct_invalidos": float,
-    "pct_anomalias": float
+  "BTC": [
+    {
+      "fecha": "2026-03-27",
+      "valor": 65000.50
+    },
+    {
+      "fecha": "2026-03-28",
+      "valor": 64200.10
+    },
+    {
+      "fecha": "2026-03-29",
+      "valor": null
+    }
+  ]
 }
+```
 
+<br>
 
----
+#### 2.2 [/quality_audit.py](./transform/quality_audit.py)
 
-## Diagnóstico
+Encargado de analizar la calidad de los datos sin modificarlos, actuando como un auditor y validador posterior a la transformación. Su función principal es identificar problemas en las series temporales, marcarlas para posteriores evaluaciones.
+
+**Responsabilidades:**
+
+- Analizar series temporales alineadas para detectar y clasificar problemas de calidad.
+- Generar métricas porcentuales de calidad y un diagnóstico final para cada activo.
+- Finalmente generar un "informe" porcentual y un diagnóstico sobre si los datos
+  de cada activo son lo suficientemente confiable para ser usado en el modelo.
+
+**Diagnóstico:**
 
 Se clasifica cada activo según la calidad de sus datos, considerando la proporción de valores faltantes y comportamientos anómalos detectados en la serie temporal:
 
-| Estado     | Condición      |
-| ---------- | -------------- |
+| Estado     | Condición       |
+| ---------- | --------------- |
 | DEFICIENTE | > 20% nulos     |
 | RIESGOSO   | > 10% anomalías |
-| ACEPTABLE  | Caso contrario |
+| ACEPTABLE  | Caso contrario  |
 
----
+**Formato de Salida:**
 
-## Salida completa
+```JSON
+{
+  "AAPL": {
+    "serie": [
+      {
+        "fecha": "2026-03-25",
+        "valor": 150.0,
+        "raw": { "fecha": "2026-03-25", "valor": 150.0 },
+        "es_nulo": false,
+        "es_invalido": false,
+        "es_anomalo": false,
+        "tipo_anomalia": null
+      },
+      {
+        "fecha": "2026-03-26",
+        "valor": 210.0,
+        "raw": { "fecha": "2026-03-26", "valor": 210.0 },
+        "es_nulo": false,
+        "es_invalido": false,
+        "es_anomalo": true,
+        "tipo_anomalia": "SALTO_BRUSCO"
+      },
+    ],
+    "calidad": {
+      "total_registros": 4,
+      "pct_nulos": 0.25,
+      "pct_invalidos": 0.0,
+      "pct_anomalias": 0.50
+    },
+    "diagnostico": {
+      "estado_calidad": "DEFICIENTE"
+    }
+  }
+}
+```
 
-<pre> json id="8zddf7" { "AAPL": { "serie": [ { "fecha": "YYYY-MM-DD", "valor": 123.45 } ], "calidad": { "total_registros": 100, "pct_nulos": 0.05, "pct_invalidos": 0.01, "pct_anomalias": 0.08 }, "diagnostico": { "estado_calidad": "ACEPTABLE" } } } </pre>
+<br>
 
----
+#### 2.3 [data_imputation.py](./transform/data_imputation.py)
 
-## Complejidad
+Encargado de la manipulación, limpieza y aplicación de técnicas justificadas de tratamiento a las series temporales en base a la pre-auditoria realizada a estas.
 
-* **O(n²)** (comparaciones de variación)
+**_En este proceso se lleva también acabo el paso de Carga (Load) del proceso ETL._**
 
-Esta complejidad se debe a que, además de recorrer la serie de datos, se realizan comparaciones entre valores consecutivos para detectar cambios bruscos o anomalías.  
-En escenarios con múltiples activos o grandes volúmenes de datos históricos, este proceso puede volverse costoso, ya que el número de operaciones crece rápidamente con el tamaño de la serie.
+**Responsabilidades:**
+
+- Transformar datos crudos auditados en datos financieros aptos para análisis.
+- Aplicar técnicas de imputación "relleno" para corregir valores nulos,
+  inválidos o anómalos.
+- Mantener un registro de trazabilidad de las correcciones aplicadas.
+- Persistir los datos limpios y los registros de limpieza en la base de datos.
+
+<br>
 
 ---
 
@@ -260,34 +233,31 @@ Alineación temporal
    ↓
 Auditoría de calidad
    ↓
+Imputación de datos
+   ↓
+Carga a la BD
+   ↓
 Datos listos para análisis cuantitativo
 ```
 
+<br>
+
 ---
 
-## Características del diseño
+## Consideraciones de Diseñó
 
-* Arquitectura modular
-* Bajo acoplamiento
-* Alta cohesión
-* Tolerancia a fallos
-* Validación de datos
-* Preparado para escalabilidad
+- **Arquitectura modular:** El sistema está dividido en componentes independientes (Extracción, Transformación, Auditoría) para facilitar el mantenimiento.
+- **Bajo acoplamiento y Alta cohesión:** Cada módulo tiene una responsabilidad única y clara, reduciendo la dependencia entre funciones.
+- **Tolerancia a fallos:** El diseño permite gestionar errores en la carga de datos o de red sin interrumpir el proceso completo del ETL.
+- **Validación de datos:** Se implementan filtros de integridad que aseguran que solo la información coherente llegue a etapas de cálculo.
+- **Testing:** El sistema cuenta con una suite de pruebas unitarias y de integración que validan la precisión de los cálculos financieros y la estabilidad del flujo.
+
+<br>
 
 ---
 
 ## Limitaciones
 
-* Uso de APIs públicas (posibles bloqueos o rate limits)
-* Dependencia de Yahoo Finance
-* No incluye persistencia (eso pertenece a la capa LOAD)
-
----
-
-## Posibles mejoras para las siguientes entregas
-
-* Implementar cache de respuestas
-* Añadir más fuentes
-* Paralelizar extracción
-* Mejorar detección de anomalías
-* Agregar imputación de datos faltantes
+- Uso de APIs públicas (posibles bloqueos o rate limits)
+- Dependencia de Yahoo Finance
+- No incluye persistencia (eso pertenece a la capa LOAD)

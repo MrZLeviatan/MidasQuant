@@ -1,9 +1,9 @@
 """
 Objetivos:
-    - Crear el motor SQLAlchemy para gestionar la conexión a la base de datos.
-    - Proporcionar una fábrica de sesiones para interactuar con la bd.
-    - Mantener la portabilidad entre SQLite y PostgreSQL sin cambios en
-        el código de la aplicación.
+- Crear el motor SQLAlchemy para gestionar la conexión a la base de datos.
+- Proporcionar una fábrica de sesiones para interactuar con la bd.
+- Mantener la portabilidad entre SQLite y PostgreSQL sin cambios en
+    el código de la aplicación.
 """
 import os
 
@@ -21,6 +21,7 @@ if DATABASE_URL.startswith("sqlite:///"):
     db_path = DATABASE_URL.replace("sqlite:///", "")
     db_dir = os.path.dirname(db_path)
 
+    # Si no existe el directorio, lo crea
     if db_dir and not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
 

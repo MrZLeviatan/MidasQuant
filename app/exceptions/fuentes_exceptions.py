@@ -1,78 +1,93 @@
+# Base de excepciones para errores relacionados a las fuentes de extracción de datos
 from app.exceptions.base_exceptions import FuenteError
 
+# El Union es la variable "||" en Python
+from typing import Union
 
-# Exception propia para el manejo de Yahoo Finance.
+
 class YahooError(FuenteError):
     """
-    Excepción lanzada cuando falla la extracción de datos de Yahoo Finance.
+    Representa un error durante la extracción de datos desde Yahoo Finance.
 
-    - original_error: Error original capturado
+    Reglas de validación:
+    - El ticker debe ser válido según las reglas de Yahoo Finance / Search.
+    - El error puede ocurrir en diferentes etapas del proceso de extracción
     """
-    def __init__(self, ticker: str, original_error: Exception | str):
+    def __init__(
+            self,
+            ticker: str,
+            etapa: str,
+            message: str,
+            detail: Union[Exception, str],
+            code: str = "YAHOO_ERROR"
+    ):
+        # Guardamos el ticker dentro del detalle para no perder contexto técnico
+        tecnico = {"ticker": ticker, "trace": str(detail)}
+
         super().__init__(
-            message=(
-                f"Error al extraer datos desde Yahoo Finance para el ticker '{ticker}'."
-                f"Detalle: {str(original_error)}"
-            ),
-            code="YAHOO_EXTRACTION_ERROR"
+            fuente="Yahoo Finance / Search",
+            etapa=etapa,
+            message=message,
+            code=code,
+            detail=tecnico
         )
-
         self.ticker = ticker
-        self.original_error = original_error
 
 
-# Exception propia para el manejo de Stooq
 class StooqError(FuenteError):
     """
-    Excepción lanzada cuando falla la extracción de datos desde Stooq.
+    Representa un error durante la extracción de datos desde Stooq.
+
+    Reglas de validación:
+    - El ticker debe ser válido según las reglas de Stooq.
+    - El error puede ocurrir en diferentes etapas del proceso de extracción
     """
-    def __init__(self, ticker: str, original_error: Exception | str):
+    def __init__(
+        self,
+        ticker: str,
+        etapa: str,
+        message: str,
+        detail: Union[Exception, str],
+        code: str = "STOOQ_ERROR"
+    ):
+        tecnico = {"ticker": ticker, "trace": str(detail)}
+
         super().__init__(
-            message=(
-                f"Error al extraer datos desde Stooq para el ticker '{ticker}'. "
-                f"Detalle: {str(original_error)}"
-            ),
-            code="STOOQ_EXTRACTION_ERROR"
+            fuente="Stooq",
+            etapa=etapa,
+            message=message,
+            code=code,
+            detail=tecnico
         )
-
         self.ticker = ticker
-        self.original_error = original_error
 
 
-# Exception propia para el manejo de MarketWatch
-class MarketWatchError(FuenteError):
-    """
-    Excepción lanzada cuando falla la extracción de datos desde MarketWatch
-    """
-    def __init__(self, ticker: str, original_error: Exception | str):
-        super().__init__(
-            message=(
-                f"Error al extraer datos desde MarketWatch para el ticker '{ticker}'. "
-                f"Detalle: {str(original_error)}"
-            ),
-            code="MARKETWATCH_EXTRACTION_ERROR"
-        )
-
-        self.ticker = ticker
-        self.original_error = original_error
-
-
-# Exception global
 class ExtraccionFallidaError(Exception):
     """
     Excepción lanzada cuando ninguna fuente logra devolver datos válidos.
 
-    Attributes:
-        ticker (str): Activo consultado
-        errores (list[str]): Lista de errores por fuente
+    Reglas de validación:
+    - Se lanza cuando todas las fuentes de extracción intentadas
+        para un ticker específico fallan
     """
-    def __init__(self, ticker: str, errores: list[str]):
-        message = (
-            f"No se pudo obtener información para el ticker '{ticker}' "
-            f"desde ninguna fuente disponible. Errores: {errores}"
-        )
-
-        super().__init__(message)
-
+    def __init__(self, ticker: str, errores: list[FuenteError]):
         self.ticker = ticker
         self.errores = errores
+
+        # El mensaje para el usuario general Ui
+        mensaje_ui = (
+            f"No se pudo obtener información del activo '{ticker}'. "
+            f"Intenta nuevamente más tarde o verifica el ticker."
+        )
+
+        # En 'detail' guardamos la lista de lo que falló en cada fuente
+        detalle_tecnico = {
+            "ticker": ticker,
+            "intentos": [e.to_dict() for e in errores]
+        }
+
+        super().__init__(
+            mensaje_ui,
+            code="EXTRACCION_FALLIDA",
+            detail=detalle_tecnico
+        )
