@@ -120,7 +120,7 @@ class SortingService:
         if not data:
             return []
 
-        #  Ordenar por volumen DESC
+        # Ordenamos por volumen de MAYOR a MENOR para identificar los 15 más grandes.
         data_sorted = sorted(
             data,
             key=lambda x: x.volumen or 0,
@@ -130,10 +130,10 @@ class SortingService:
         # Tomar TOP 15
         top_15 = data_sorted[:15]
 
-        # Ordenar ASCENDENTE (por fecha)
-        top_15_sorted = sorted(
+        # Ahora los re-ordenamos de forma ASCENDENTE (de menor a mayor volumen).
+        top_15_ascendente = sorted(
             top_15,
-            key=lambda x: x.fecha
+            key=lambda x: x.volumen or 0
         )
 
-        return top_15_sorted
+        return top_15_ascendente
