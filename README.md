@@ -190,10 +190,10 @@ Este archivo contiene todas las dependencias requeridas para:
 
 #### 5. Ejecutar la aplicación web
 
-Se puede iniciar la aplicación web basada en Streamlit.
+Se puede iniciar la aplicación web basada en Streamlit en el directorio raíz del proyecto 'MidasQuant/'
 
 ```bash
-streamlit run app/main.py
+python -m streamlit run app/main.py
 ```
 
 Después de ejecutar este comando, la aplicación estará disponible en el navegador en una dirección similar a:
