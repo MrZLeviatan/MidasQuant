@@ -24,6 +24,15 @@ class BucketSort(BaseSort):
         min_key = min(keys)
         max_key = max(keys)
 
+        if max_key == min_key:
+            return data  # ya está ordenado
+
+        # Normalización
+        normalized_keys = [
+            (k - min_key) / (max_key - min_key)
+            for k in keys
+        ]
+
         # Paso 3: Definir cuántos baldes usaremos. Se usa la misma cantidad que elemento
         bucket_count = len(data)
 
@@ -31,14 +40,14 @@ class BucketSort(BaseSort):
         buckets = [[] for _ in range(bucket_count)]
 
         # Paso 5: Reparto de Elementos (Scatter)
-        for item, key in zip(data, keys):
+        for item, norm_key in zip(data, normalized_keys):
             """
             Formula de Normalización:
             - Convierte la clave en un índice entre 0 y bucket_count - 1
             - (ky - min) / (rango total) da un porcentaje entre 0 a 1.
             - Al multiplicar por (bucker_count_1), nos da la posición exacta del balde.
             """
-            index = int((key - min_key) / (max_key - min_key + 1) * (bucket_count - 1))
+            index = int(norm_key * (bucket_count - 1))
 
             # Metemos el objeto original en el balde que le corresponde.
             buckets[index].append(item)
@@ -52,3 +61,33 @@ class BucketSort(BaseSort):
             result.extend(bucket)
 
         return result
+
+    def _get_key(self, obj):
+        """
+        Genera clave numérica estable para Bucket Sort.
+        """
+
+        # Fecha → entero compacto
+        fecha = obj.fecha
+        fecha_int = fecha.year * 10000 + fecha.month * 100 + fecha.day
+
+        # Close seguro
+        close = int((obj.close or 0) * 1000)
+
+        return fecha_int * 10**4 + close
+
+    def _insertion_sort(self, arr):
+        """
+        Insertion Sort usando compare() (consistencia del sistema)
+        """
+
+        for i in range(1, len(arr)):
+            key = arr[i]
+            j = i - 1
+
+            # Usar compare del BaseSort
+            while j >= 0 and self.compare(key, arr[j]):
+                arr[j + 1] = arr[j]
+                j -= 1
+
+            arr[j + 1] = key

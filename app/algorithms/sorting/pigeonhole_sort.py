@@ -24,13 +24,20 @@ class PigeonholeSort(BaseSort):
         # Esto genera una lista paralela de 'pesos' numéricos.
         keys = [self._get_key(x) for x in data]
 
-        # Paso 2: Identificar los límites. El nido más bajo y el más alto.
-        min_key = min(keys)
-        max_key = max(keys)
+        # Normalización de claves grandes a pequeñas
+        sorted_unique_keys = sorted(set(keys))
+
+        # Mapa: clave original → índice compacto
+        key_to_index = {
+            key: idx for idx, key in enumerate(sorted_unique_keys)
+        }
+
+        # Convertimos claves a rango [0..n]
+        normalized_keys = [key_to_index[k] for k in keys]
 
         # Paso 3: Definir el tamaño del estante de nidos.
         # El +1 asegura que haya espacio para el último valor (el máximo)
-        size = max_key - min_key + 1
+        size = len(sorted_unique_keys)
 
         # Paso 4: CDrear los 'huecos' (nidos).
         # Es una lista de listas: cada posición puede recibir múltiples palomas.
@@ -38,10 +45,10 @@ class PigeonholeSort(BaseSort):
 
         # Paso 5: Distribución
         # Recorre la data y sus claves simultáneamente.
-        for item, key in zip(data, keys):
+        for item, key in zip(data, normalized_keys):
             # Calcula el índice restando el mínimo (normalización).
             # Ejemplo: si el min es 100 y la clave es 105, va al hueco índice 5.
-            holes[key - min_key].append(item)
+            holes[key].append(item)
 
         # Paso 6: Reconstrucción
         # Volcamos el contenido de los nidos de vuelta a la lista original
@@ -59,17 +66,18 @@ class PigeonholeSort(BaseSort):
         Crea un identificador numérico único basado en la fecha y el precio.
         """
 
-        # Convierte la fecha a segundos totales (un número entero grande).
-        timestamp = int(obj.fecha.timestamp())
+        # Convertir fecha a entero compacto YYYYMMDD
+        fecha = obj.fecha
+        fecha_int = fecha.year * 10000 + fecha.month * 100 + fecha.day
 
         """
         Convierte el precio 'close' a entero. Multiplica por 1000 para no
             perder los decimales (ej: 10.555 se vuelve 10555).
         """
-        close = int(obj.close * 1000)
+        close = int((obj.close or 0) * 1000)
 
         """
         COMBINACIÓN: Desplaza el timestamp a la izquierda y suma el precio.
         - Esto asegura que la fecha sea el criterio principal y el precio el secundario.
         """
-        return timestamp * 10**6 + close
+        return fecha_int * 10**4 + close

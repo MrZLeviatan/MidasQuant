@@ -176,42 +176,6 @@ class SerieTemporalRaw(Base):
     activo = relationship("Activo", back_populates="precios_raw")
 
 
-# Tabla: Serie temporal limpia de precios de un activo (después de ETL)
-class SerieTemporalLimpia(Base):
-    """
-    Datos después del proceso de limpieza y transformación.
-
-    Contiene:
-    - Datos alineados
-    - Valores corregidos/interpolados
-    - Dataset listo para análisis
-    """
-    __tablename__ = "serie_temporal_limpia"
-
-    id_serie = Column(Integer, primary_key=True, index=True)
-
-    # FK hacia el Activo
-    activo_id = Column(Integer, ForeignKey("activo.id_activo"), index=True)
-
-    # Datos mínimos de la Series Temporal (se pueden agregar más)
-    fecha = Column(Date, index=True)
-    open = Column(Float)
-    high = Column(Float)
-    low = Column(Float)
-    close = Column(Float)
-    volumen = Column(Float)
-
-    # Relación con registros de limpieza
-    registros_limp = relationship("RegistroLimpieza", back_populates="serie_limpia")
-
-    # Restricción para evitar duplicados por activo y fecha
-    __table_args__ = (
-        UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_limpia"),
-    )
-    # Relación (N:1) a un Activo ( un activo puede tener varias series Limpias)
-    activo = relationship("Activo", back_populates="precios_limpios")
-
-
 # Tabla: Registro de limpieza de datos
 class RegistroLimpieza(Base):
     """
@@ -256,3 +220,39 @@ class RegistroLimpieza(Base):
     activo = relationship("Activo")
     serie_limpia = relationship("SerieTemporalLimpia", back_populates="registros_limp")
     serie_raw = relationship("SerieTemporalRaw")
+
+
+# Tabla: Serie temporal limpia de precios de un activo (después de ETL)
+class SerieTemporalLimpia(Base):
+    """
+    Datos después del proceso de limpieza y transformación.
+
+    Contiene:
+    - Datos alineados
+    - Valores corregidos/interpolados
+    - Dataset listo para análisis
+    """
+    __tablename__ = "serie_temporal_limpia"
+
+    id_serie = Column(Integer, primary_key=True, index=True)
+
+    # FK hacia el Activo
+    activo_id = Column(Integer, ForeignKey("activo.id_activo"), index=True)
+
+    # Datos mínimos de la Series Temporal (se pueden agregar más)
+    fecha = Column(Date, index=True)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volumen = Column(Float)
+
+    # Relación con registros de limpieza
+    registros_limp = relationship("RegistroLimpieza", back_populates="serie_limpia")
+
+    # Restricción para evitar duplicados por activo y fecha
+    __table_args__ = (
+        UniqueConstraint("activo_id", "fecha", name="uq_activo_fecha_limpia"),
+    )
+    # Relación (N:1) a un Activo ( un activo puede tener varias series Limpias)
+    activo = relationship("Activo", back_populates="precios_limpios")

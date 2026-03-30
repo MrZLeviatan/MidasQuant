@@ -83,17 +83,19 @@ class RadixSort(BaseSort):
         """
         Genera clave numérica compuesta.
         """
-        # Convierte la fecha a segundos totales (un número entero grande).
-        timestamp = int(obj.fecha.timestamp())
+        # Convierte la fecha a entero compacto
+        fecha = obj.fecha
+
+        fecha_int = fecha.year * 10000 + fecha.month * 100 + fecha.day
 
         """
         Convierte el precio 'close' a entero. Multiplica por 1000 para no
             perder los decimales (ej: 10.555 se vuelve 10555).
         """
-        close = int(obj.close * 1000)
+        close = int((obj.close or 0) * 1000)
 
         """
         COMBINACIÓN: Desplaza el timestamp a la izquierda y suma el precio.
         - Esto asegura que la fecha sea el criterio principal y el precio el secundario.
         """
-        return timestamp * 10**6 + close
+        return fecha_int * 10**4 + close
