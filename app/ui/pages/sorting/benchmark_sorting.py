@@ -22,7 +22,7 @@ def render():
     col_btn1, col_btn2 = st.columns(2)
     ejecutar_real = col_btn1.button("Ejecutar Benchmark Real", use_container_width=True)
     ejecutar_controlado = col_btn2.button(
-        "Prueba Controlada (100 datos)", use_container_width=True
+        "Prueba Controlada (800 datos)", use_container_width=True
     )
 
     resultados = None
@@ -32,7 +32,7 @@ def render():
             resultados = service.ejecutar_benchmark()
     elif ejecutar_controlado:
         with st.spinner("Ejecutando prueba rápida..."):
-            data = service.obtener_datos_limitados(100)
+            data = service.obtener_datos_limitados(800)
             resultados = service.ejecutar_benchmark(data=data)
 
     if resultados is None:

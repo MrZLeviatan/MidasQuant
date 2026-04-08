@@ -100,9 +100,13 @@ class TimSort(BaseSort):
             if self.compare(left_part[i], right_part[j]):
                 arr[k] = left_part[i]
                 i += 1
-            else:
+            elif self.compare(right_part[j], left_part[i]):
                 arr[k] = right_part[j]
                 j += 1
+            else:
+                # Caso igualdad → PRIORIDAD A LA IZQUIERDA (estabilidad)
+                arr[k] = left_part[i]
+                i += 1
 
             k += 1
 

@@ -24,6 +24,12 @@ class TreeSort(BaseSort):
     Algoritmo que ordena transformando una lista en un árbol binario.
     """
 
+    def _key(self, obj):
+        """
+        Genera una clave ordenable total para cada elemento.
+        """
+        return (obj.fecha, obj.close, id(obj))
+
     def sort(self, data):
         """
         Convierte una lista en árbol y luego la extrae ordenada
@@ -49,43 +55,44 @@ class TreeSort(BaseSort):
         return result
 
     def _insert(self, node, value):
-        """
-        Busca el hueco correcto para un nuevo valor de forma recursiva.
-        """
+        current = node
+        value_key = self._key(value)
 
-        # Si el nuevo valor es 'menor' que el valor del nodo donde estamos parados...
-        if self.compare(value, node.value):
+        while True:
+            current_key = self._key(current.value)
 
-            # Si el camino a la izquierda está libre, lo plantamos ahí.
-            if node.left is None:
-                node.left = TreeNode(value)
-            # Si ya hay alguien, bajamos un nivel más por la izquierda y repetimos.
+            # Si es menor → izquierda
+            if value_key < current_key:
+                if current.left is None:
+                    current.left = TreeNode(value)
+                    return
+                current = current.left
+
+            # Mayor o igual → derecha (maneja duplicados correctamente)
             else:
-                self._insert(node.left, value)
-
-        # Si el nuevo valor es 'mayor o igual'...
-        else:
-            # Si el camino a la derecha está vacío, lo colocamos ahí.
-            if node.right is None:
-                node.right = TreeNode(value)
-            # Si está ocupado, bajamos un nivel por la derecha y repetimos.
-            else:
-                self._insert(node.right, value)
+                if current.right is None:
+                    current.right = TreeNode(value)
+                    return
+                current = current.right
 
     def _inorder(self, node, result):
         """
         Visita el árbol en orden: los más pequeños primero,
             luego el centro, luego los grandes.
         """
+        stack = []
+        current = node
 
-        # Si el nodo actual no es nulo (existe):
-        if node:
+        while stack or current:
 
             # 1. Se va lo más a la izquierda posible (al valor más pequeño).
-            self._inorder(node.left, result)
+            while current:
+                stack.append(current)
+                current = current.left
 
-            # 2. Guarda el valor del nodo actual en la lista de resultados.
-            result.append(node.value)
+                # 2. Guarda el valor del nodo actual en la lista de resultados.
+                current = stack.pop()
+                result.append(current.value)
 
-            # 3. Revisa los valores mayores en el lado derecho.
-            self._inorder(node.right, result)
+                # 3. Revisa los valores mayores en el lado derecho.
+                current = current.right

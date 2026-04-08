@@ -169,14 +169,36 @@ class ETLService:
 
             yield {"tipo": "success", "mensaje": "Auditoría completa", "progress": 0.9}
 
+            # Obtenemos los activos del portafolio
+            activo_lista = [pa.activo for pa in portafolio.activos]
+            total = len(activo_lista)
+
             # Imputación (Putación)
             imputador = ImputadorSeriesTemporales(db)
-            imputador.procesar(
-                dataset_auditado, [pa.activo for pa in portafolio.activos]
-            )
+
+            # Iteramos sobre cada activo para el proceso de imputación
+            for i, activo in enumerate(activo_lista):
+
+                token = activo.ticker
+                avance = 0.9 + (i / total) * 0.09
+                yield {
+                    "tipo": "info",
+                    "mensaje": f"Transformando {token}...",
+                    "progress": avance
+                }
+                # Se llama al proceso de imputación del activo
+                imputador.procesar(dataset_auditado, [activo])
+
+                yield {
+                    "tipo": "success_item",
+                    "mensaje": f"{token} listo",
+                    "progress": avance + (0.01 / total)
+                }
 
             yield {
-                "tipo": "success", "mensaje": "Imputación completa", "progress": 0.95
+                "tipo": "success",
+                "mensaje": "Transformación completa",
+                "progress": 0.99
             }
 
             # Fase 5: Load, finalización y persistencia del estado ETL

@@ -75,9 +75,21 @@ A continuación, se presenta la complejidad teórica de los algoritmos solicitad
 
 ## Descripción de Algoritmos
 
+> [!IMPORTANT]
+> Aislamiento de Pruebas: Cada algoritmo se ejecuta mediante un test nativo independiente. Esto es fundamental para medir el rendimiento neto del código, eliminando el ruido visual de la interfaz de usuario y evitando la competencia por recursos de hardware (como la RAM) con otros procesos del sistema. Así garantizamos que el tiempo registrado sea lo más cercano a la realidad técnica.
+
+> [!TIP]
+> **Benchmark y Pruebas de Estrés:** Para validar el rendimiento neto y observar los tiempos de ejecución sin interferencias, puedes ejecutar el test nativo directamente desde la terminal. Esto permite ver cómo escala el algoritmo y en qué volumen de datos alcanza su límite operativo.
+
 ### 1. [TimSort](./tim_sort.py)
 
 Algoritmo híbrido derivado del Merge Sort e Insertion Sort. Funciona encontrando sub-secuencias ya ordenadas (runs) y combinándolas. Es el estándar en Python debido a su alta eficiencia en datos del mundo real.
+
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_tim_sort.py
+```
 
 <br>
 
@@ -85,11 +97,23 @@ Algoritmo híbrido derivado del Merge Sort e Insertion Sort. Funciona encontrand
 
 Mejora del Bubble Sort que elimina los "tortugas" (valores pequeños al final de la lista) utilizando un factor de brecha (gap) que se reduce en cada iteración.
 
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_comb_sort.py
+```
+
 <br>
 
 ### 3. [Selection Sort](./selection_sort.py)
 
 Funciona dividiendo la lista en una parte ordenada y otra desordenada, buscando repetidamente el elemento mínimo de la parte desordenada y moviéndolo al principio.
+
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_selection_sort.py
+```
 
 <br>
 
@@ -97,11 +121,26 @@ Funciona dividiendo la lista en una parte ordenada y otra desordenada, buscando 
 
 Construye un Árbol Binario de Búsqueda (BST) con los elementos de la lista y luego realiza un recorrido in-order para obtener los elementos ya ordenados.
 
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_tree_sort.py
+```
+
+> [!WARNING]
+> Por la estructura de datos que se manejan, es común que este algoritmo falle a cierta cantidad.
+
 <br>
 
 ### 5. [Pigeonhole Sort](./pigeonhole_sort.py)
 
 Algoritmo de ordenamiento no comparativo ideal cuando el rango de valores y el número de elementos son similares. Mueve elementos a "huecos" (pigeonholes) basados en su valor.
+
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_pigeonhole_sort.py
+```
 
 <br>
 
@@ -127,6 +166,12 @@ Utiliza una estructura de datos de "montículo" (heap) para encontrar el element
 
 Algoritmo de ordenamiento paralelo que construye secuencias bitónicas (que crecen y luego decrecen) para luego mezclarlas de forma ordenada.
 
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_bitonic_sort.py
+```
+
 <br>
 
 ### 10. [Gnome Sort](./gnome_sort.py)
@@ -138,6 +183,12 @@ Similar al Insertion Sort, pero mueve un elemento a su posición correcta median
 ### 11. [Binary Insertion Sort](./binary_insertion_sort.py)
 
 Variante del Insertion Sort que utiliza búsqueda binaria para encontrar el lugar exacto donde insertar el nuevo elemento, reduciendo el número de comparaciones.
+
+**Ejecuta el siguiente comando para ver los resultados detallados:**
+
+```bash
+pytest -s -v tests/sorting/test_binary_insertion_sort.py
+```
 
 <br>
 
@@ -152,3 +203,5 @@ Ordena los datos procesando sus dígitos individuales (desde el menos significat
 ## Visualización de Resultados
 
 El sistema genera automáticamente un diagrama de barras que representa los tiempos de ejecución de forma ascendente. Adicionalmente, se extraen y ordenan los 15 días con mayor volumen de negociación para cada activo procesado.
+
+<br>

@@ -28,7 +28,7 @@ class SortingService:
         # Devuelve la lista de las SerieTemporalLimpia
         return self.db.query(SerieTemporalLimpia).all()
 
-    def obtener_datos_limitados(self, limite=100):
+    def obtener_datos_limitados(self, limite=2000):
         """
         Obtiene una muestra controlada de datos.
         """

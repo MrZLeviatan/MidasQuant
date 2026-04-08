@@ -87,7 +87,7 @@ La documentación formal del proyecto se encuentra organizada y mantenida en Not
 - Manual de usuario
 
 Enlace a la documentación completa:
-[Documentación Notion]()
+[Documentación Notion](https://midasquant.notion.site/MidasQuant-Proyecto-An-lisis-de-Algoritmos-309b45e6797b80d5919cdbcd0b16217f?source=copy_link)
 
 El presente repositorio contiene la implementación técnica del sistema y la información necesaria para su ejecución y validación.
 
