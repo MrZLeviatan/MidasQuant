@@ -15,7 +15,6 @@ from app.database.init_db import init_database
 
 from app.ui.pages.portafolio.configurar_portafolio import render as r_config_portafolio
 from app.ui.pages.portafolio.listar_portafolios import render as r_listar_portafolios
-from app.ui.pages.sorting.benchmark_sorting import render as r_sorting_benchmarking
 
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
@@ -49,7 +48,6 @@ paginas = {
     "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
     "Registro de Portafolio": r_config_portafolio,
     "Ver Portafolios y ETL": r_listar_portafolios,
-    "Benchmarking Ordenamiento": r_sorting_benchmarking
     # Futuras páginas se pueden agregar aquí
 }
 
