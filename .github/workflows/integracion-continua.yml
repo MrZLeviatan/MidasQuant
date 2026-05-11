@@ -120,4 +120,4 @@ jobs:
       # Esto garantiza que nuevas modificaciones no rompan funcionalidades previamente implementadas.
       - name: Run unit tests
         run: |
-          venv/bin/pytest test/
+          venv/bin/pytest tests/
