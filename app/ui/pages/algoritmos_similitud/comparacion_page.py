@@ -11,6 +11,14 @@ Responsabilidades:
 # Librería principal UI
 import streamlit as st
 
+# Pandas SOLO en UI
+import pandas as pd
+
+# Servicio comparación
+from app.services.comparacion.comparacion_service import (
+    obtener_series_comparacion
+)
+
 # Servicios
 from app.services.portafolios.portafolio_service import (
     obtener_portafolios_con_etl,
@@ -177,55 +185,33 @@ def render():
                 activo_1 = seleccionados[0]
                 activo_2 = seleccionados[1]
 
-                st.success(
-                    f"""
-                    Comparación preparada correctamente.
+                # OBTENER SERIES TEMPORALES
+                series = obtener_series_comparacion(
+                    id_portafolio,
+                    activo_1,
+                    activo_2
+                )
 
-                    Activos seleccionados:
-                    • {activo_1}
-                    • {activo_2}
+                # CONVERTIR A DATAFRAME (SOLO UI)
+                df_series = pd.DataFrame(series)
+
+                # GRÁFICA
+                st.subheader(
+                    "📈 Comparación de Series Temporales"
+                )
+
+                st.caption(
+                    """
+                    Las series fueron normalizadas a base 100 para
+                    comparar su comportamiento relativo.
                     """
                 )
 
-                # TARJETAS VISUALES
-                col1, col2 = st.columns(2)
-
-                with col1:
-
-                    with st.container(border=True):
-
-                        st.markdown("### 📊 Activo 1")
-                        st.markdown(f"#### {activo_1}")
-
-                        st.caption(
-                            "Activo base para análisis comparativo."
-                        )
-
-                with col2:
-
-                    with st.container(border=True):
-
-                        st.markdown("### 📊 Activo 2")
-                        st.markdown(f"#### {activo_2}")
-
-                        st.caption(
-                            "Activo objetivo para análisis comparativo."
-                        )
-
-                st.divider()
-
-                # BOTÓN PRINCIPAL
-                col_btn1, col_btn2, col_btn3 = st.columns(
-                    [1, 2, 1]
+                st.line_chart(
+                    df_series,
+                    x="fecha",
+                    height=450
                 )
-
-                with col_btn2:
-
-                    st.button(
-                        "Iniciar Comparación",
-                        type="primary",
-                        use_container_width=True
-                    )
 
             # MÁS DE DOS
             else:

@@ -122,3 +122,25 @@ class PortafolioSinETLError(DominioError):
         )
         # Guardamos contexto adicional
         self.portafolio_id = portafolio_id
+
+
+class InsuficientesDatosComunesError(DominioError):
+    """
+    Error cuando no hay suficientes puntos de datos coincidentes
+    entre dos o más series temporales.
+
+    Regla de negocio:
+    - Se requieren al menos 2 fechas comunes para realizar cálculos
+        de relación (como correlación o covarianza).
+    """
+    def __init__(self, puntos_encontrados: int, detail: Optional[Any] = None):
+        detail = detail or {"puntos_encontrados": puntos_encontrados}
+
+        super().__init__(
+            message=(
+                "No existen suficientes fechas comunes entre los activos. "
+            ),
+            code="INSUFICIENTES_DATOS_COMUNES",
+            detail=detail
+        )
+        self.puntos_encontrados = puntos_encontrados

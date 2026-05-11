@@ -21,7 +21,8 @@ from app.exceptions.dominio_exceptions import (
     HorizonteInvalidoError,
     TickerInvalidoError,
     MinimoActivosError,
-    PortafolioSinETLError
+    PortafolioSinETLError,
+    InsuficientesDatosComunesError
 )
 
 
@@ -58,5 +59,6 @@ __all__ = [
     "ExtraccionFallidaError",
     "RecursoNoEncontradoError",
     "RangoFechaFinError",
-    "PortafolioSinETLError"
+    "PortafolioSinETLError",
+    "InsuficientesDatosComunesError"
 ]
