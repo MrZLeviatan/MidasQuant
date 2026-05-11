@@ -102,3 +102,23 @@ class TickerInvalidoError(DominioError):
         # Guardamos contexto adicional
         self.ticker = ticker
         self.motivo = motivo
+
+
+class PortafolioSinETLError(DominioError):
+    """
+    Excepción lanzada cuando se intenta realizar una operación que requiere
+    un proceso ETL en un portafolio que no lo tiene.
+
+    Regla de negocio:
+    - Un portafolio debe tener un proceso ETL ejecutado para ciertas operaciones.
+    """
+    def __init__(self, portafolio_id: int):
+        detail = {"portafolio_id": portafolio_id}
+
+        super().__init__(
+            message=f"El portafolio con ID {portafolio_id} no posee proceso ETL.",
+            code="PORTAFOLIO_SIN_ETL",
+            detail=detail
+        )
+        # Guardamos contexto adicional
+        self.portafolio_id = portafolio_id

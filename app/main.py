@@ -15,6 +15,9 @@ from app.database.init_db import init_database
 
 from app.ui.pages.portafolio.configurar_portafolio import render as r_config_portafolio
 from app.ui.pages.portafolio.listar_portafolios import render as r_listar_portafolios
+from app.ui.pages.algoritmos_similitud.comparacion_page import (
+    render as r_comparacion_activos
+)
 
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
@@ -48,6 +51,7 @@ paginas = {
     "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
     "Registro de Portafolio": r_config_portafolio,
     "Ver Portafolios y ETL": r_listar_portafolios,
+    "Comparación de Activos": r_comparacion_activos
     # Futuras páginas se pueden agregar aquí
 }
 
