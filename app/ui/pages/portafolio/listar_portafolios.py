@@ -1,3 +1,14 @@
+"""
+Página de listado de Portafolios y proceso ETL. (HU05 - HU09)
+
+Responsabilidades:
+- Mostrar un listado de portafolios con sus activos financieros.
+- Permitir al usuario seleccionar un portafolio para ver sus activos.
+- Iniciar un proceso ETL para el portafolio seleccionado.
+- Mostrar el proceso del ETL en tiempo real con mensajes de éxito y error.
+"""
+
+
 import streamlit as st
 import time
 
@@ -18,17 +29,31 @@ from app.ui.components.feedback.alerts import mostrar_error
 
 def render():
     """
-    Renderiza la pantalla.
+    Punto de entrada de la página.
+
+    Esta función:
+    1. Muestra el listado de portafolios.
+    2. Permite la selección de un portafolio para mostrar sus activos.
+    3. Proporciona un botón para iniciar el proceso ETL.
+    4. Muestra mensajes de éxito y error en tiempo real durante el proceso ETL
     """
+
+    # Encabezado de la página
     st.header("Listado de Portafolios y Proceso ETL")
 
-    # Inicialización de Session State (Banderazos)
+    # Banderas de los procesos y mensajes para el proceso ETL.
+
+    # Si el ETL está corriendo, bloqueamos el botón y mostramos el proceso.
     if "etl_corriendo" not in st.session_state:
         st.session_state.etl_corriendo = False
+
+    # Mostrar los mensajes dinámicos durante el proceso ETL.
     if "mensajes_exito" not in st.session_state:
         st.session_state.mensajes_exito = []
     if "mensajes_error" not in st.session_state:
         st.session_state.mensajes_error = []
+
+    # Resumen final del proceso ETL para mostrar al finalizar con contador.
     if "resumen_final" not in st.session_state:
         st.session_state.resumen_final = None
 
@@ -85,6 +110,8 @@ def disparar_etl(id_portafolio):
     """
     Lógica UI para la visualización del proceso ETL.
     """
+
+    # Inicializamos las variables de estado para el proceso ETL
     st.session_state.etl_corriendo = True
     st.session_state.mensajes_exito = []
     st.session_state.mensajes_error = []
@@ -108,8 +135,10 @@ def disparar_etl(id_portafolio):
 
         # Actualizamos la UI visual directamente
         status_text.text(f"Procesando: {evento.get('mensaje')}")
+        # La barra de progreso se actualiza con el valor enviado por el evento
         progress_bar.progress(evento.get("progress", 0.0))
 
+        # Según el tipo de mensaje, lo guardamos en el estado correspondiente
         if tipo in ["info", "success", "success_item"]:
             st.session_state.mensajes_exito.append(msg)
             # Mantenemos solo los últimos 2 mensajes para no saturar la vista.

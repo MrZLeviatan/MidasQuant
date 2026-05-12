@@ -62,7 +62,7 @@ def mostrar_tabla_portafolios_comparacion(data: list[dict]):
         ]
     )
 
-    # Identifica qué fila(s) han sido marcadas por el usuario en esta interacción.
+    # Identifica qué fila han sido marcadas por el usuario en esta interacción.
     seleccionados = edited_df[
         edited_df["Seleccionar"]
     ]
@@ -73,19 +73,19 @@ def mostrar_tabla_portafolios_comparacion(data: list[dict]):
 
     # Si el usuario selecciona uno nuevo teniendo ya uno activo, se prioriza el nuevo.
     if len(seleccionados) > 1:
-        # # Detecta el ID que es diferente al que ya teníamos guardado.
+        # Detecta el ID que es diferente al que ya teníamos guardado.
         nuevo_id = seleccionados[
             seleccionados["ID"] != id_actual
         ].iloc[0]["ID"]
 
-        # # Recarga la app para limpiar el checkbox anterior visualmente.
+        # Recarga la app para limpiar el checkbox anterior visualmente.
         st.session_state[
             "portafolio_comparacion"
         ] = nuevo_id
 
         st.rerun()
 
-    # # Si solo hay uno seleccionado pero es distinto al del estado, actualizamos.
+    # Si solo hay uno seleccionado pero es distinto al del estado, actualizamos.
     elif len(seleccionados) == 1:
         nuevo_id = seleccionados.iloc[0]["ID"]
         if nuevo_id != id_actual:
@@ -94,7 +94,7 @@ def mostrar_tabla_portafolios_comparacion(data: list[dict]):
             ] = nuevo_id
             st.rerun()
 
-    # # Si el usuario desmarca todo, reseteamos el estado a None.
+    # Si el usuario desmarca todo, reseteamos el estado a None.
     elif len(seleccionados) == 0:
         st.session_state[
             "portafolio_comparacion"

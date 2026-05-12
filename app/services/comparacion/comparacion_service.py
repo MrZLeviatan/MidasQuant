@@ -3,8 +3,8 @@ Servicios de comparación de series temporales.
 
 Responsabilidades:
 - Obtener series temporales limpias.
-- Filtrar por rango temporal del portafolio.
 - Preparar datos para visualización y algoritmos.
+- Orquestar el análisis comparativo entre activos con diferentes algoritmos.
 """
 
 # Sesión de BD
@@ -21,7 +21,7 @@ from app.database.models import (
 from app.exceptions import (
     RecursoNoEncontradoError,
     InsuficientesDatosComunesError,
-    DominioError
+    ObjetoVacio
 )
 
 
@@ -31,7 +31,7 @@ def obtener_series_comparacion(
     ticker_2: str
 ):
     """
-    Obtiene dos series temporales limpias y alineadas temporalmente.
+    Obtiene dos series limpias y alineadas temporalmente.
 
     Reglas:
     - Las series se filtran por el rango temporal
@@ -58,7 +58,7 @@ def obtener_series_comparacion(
             ConfiguracionAnalisis.portafolio_id == portafolio_id
         ).first()
 
-        # Validar configuración
+        # Validar configuración (Validar fecha inicio/fin)
         if not configuracion:
             raise RecursoNoEncontradoError(
                 message="El portafolio no posee configuración de análisis.",
@@ -70,11 +70,12 @@ def obtener_series_comparacion(
         fecha_inicio = configuracion.fecha_inicio
         fecha_fin = configuracion.fecha_fin
 
-        # BUSCAR ACTIVO 1
+        # Buscar el Activo 1 por su ticker
         activo_1 = db.query(Activo).filter(
             Activo.ticker == ticker_1
         ).first()
 
+        # Validar que el activo 1 exista
         if not activo_1:
             raise RecursoNoEncontradoError(
                 message="El activo no fue encontrado.",
@@ -82,11 +83,12 @@ def obtener_series_comparacion(
                 detail=f"Ticker: {ticker_1}"
             )
 
-        # BUSCAR ACTIVO 2
+        # Buscar el Activo 2 por su ticker
         activo_2 = db.query(Activo).filter(
             Activo.ticker == ticker_2
         ).first()
 
+        # Validar que el activo 2 exista
         if not activo_2:
             raise RecursoNoEncontradoError(
                 message="El activo no fue encontrado.",
@@ -116,7 +118,7 @@ def obtener_series_comparacion(
             SerieTemporalLimpia.fecha.asc()
         ).all()
 
-        # MAPEO A DICCIONARIOS PARA BÚSQUEDA O(1)
+        # Verificar que ambas series tengan datos
         if not serie_1:
             raise RecursoNoEncontradoError(
                 message="El activo no fue encontrado.",
@@ -147,7 +149,7 @@ def obtener_series_comparacion(
             set(datos_1.keys()) & set(datos_2.keys())
         )
 
-        # Mínimo 2 puntos para poder trazar una línea/tendencia.
+        # Validación de al menos 2 puntos para calcular variaciones o tendencias.
         if len(fechas_comunes) < 2:
             raise InsuficientesDatosComunesError(puntos_encontrados=len(fechas_comunes))
 
@@ -162,9 +164,10 @@ def obtener_series_comparacion(
         precio_base_1 = datos_1[fechas_comunes[0]]
         precio_base_2 = datos_2[fechas_comunes[0]]
 
-        # CONSTRUCCIÓN DEL DATASET FINAL
+        # Construcción de la serie comparativa con precisión financiera de 4 decimales.
         resultado = []
 
+        # Construcción del dataset normalizado
         for fecha in fechas_comunes:
 
             precio_1 = datos_1[fecha]
@@ -174,7 +177,11 @@ def obtener_series_comparacion(
             if precio_base_1 == 0 or precio_base_2 == 0:
                 continue
 
-            # Normalización financiera base 100
+            """
+            Normalización: (Precio Actual / Precio en T0) * 100
+            Esto iguala la linea de salida de ambos activos a 100,
+                permitiendo comparar su evolución relativa.
+            """
             normalizado_1 = (
                 precio_1 / precio_base_1
             ) * 100
@@ -183,7 +190,7 @@ def obtener_series_comparacion(
                 precio_2 / precio_base_2
             ) * 100
 
-            # Precisión financiera de 4 decimales.
+            # Redondea a 4 decimales para balancear precisión y ligereza de datos.
             resultado.append({
                 "fecha": fecha,
                 ticker_1: round(normalizado_1, 4),
@@ -192,15 +199,12 @@ def obtener_series_comparacion(
 
         # Verificación final de integridad del dataset generado.
         if not resultado:
-            raise DominioError(
-                code="SERIE_COMPARATIVA_VACIA",
-                message=(
-                    "No fue posible construir "
-                    "la serie temporal comparativa."
-                )
+            raise ObjetoVacio(
+                objeto_nombre="serie_comparativa"
             )
 
         return resultado
 
+    # Cierre de sesión de la BD.
     finally:
         db.close()

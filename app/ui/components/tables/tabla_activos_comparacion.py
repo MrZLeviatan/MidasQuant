@@ -2,7 +2,9 @@
 Tabla interactiva para selección de activos.
 """
 
+# Librería principal para la construcción de la interfaz web
 import streamlit as st
+# Herramienta utilizada para manipulación de datos de la UI.
 import pandas as pd
 
 
@@ -19,7 +21,7 @@ def mostrar_tabla_activos_comparacion(
         f"Activos del Portafolio: {nombre_portafolio}"
     )
 
-    # Early return: Si la lista está vacía, evita procesar un DataFrame inexistente.
+    # Si la lista está vacía, evita procesar un DataFrame inexistente.
     if not data:
         st.info(
             "Este portafolio no posee activos."
@@ -48,6 +50,7 @@ def mostrar_tabla_activos_comparacion(
     )
 
     # Renderiza la tabla interactiva.
+    
     # Se deshabilita la edición en columnas para que solo el checkbox sea clickable.
     edited_df = st.data_editor(
         df,

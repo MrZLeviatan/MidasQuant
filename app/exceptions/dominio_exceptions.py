@@ -144,3 +144,22 @@ class InsuficientesDatosComunesError(DominioError):
             detail=detail
         )
         self.puntos_encontrados = puntos_encontrados
+
+
+class ObjetoVacio(DominioError):
+    """
+    Excepción lanzada cuando se encuentra un objeto vacío
+    en un contexto donde se esperaba contenido.
+
+    Regla de negocio:
+    - No se permiten objetos vacíos en ciertas operaciones o contextos.
+    """
+    def __init__(self, objeto_nombre: str, detail: Optional[Any] = None):
+        detail = detail or {"objeto_nombre": objeto_nombre}
+
+        super().__init__(
+            message=f"El objeto '{objeto_nombre}' está vacío.",
+            code="OBJETO_VACIO",
+            detail=detail
+        )
+        self.objeto_nombre = objeto_nombre
