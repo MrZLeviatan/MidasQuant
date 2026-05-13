@@ -218,3 +218,5 @@ data/dev.db
 
 # Omitir el ENV
 .env
+data/
+.venv/
