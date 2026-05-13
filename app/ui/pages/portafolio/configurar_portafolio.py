@@ -9,93 +9,166 @@ Responsabilidades:
 - Mostrar resultados en UI
 """
 
-import streamlit as st
 from datetime import date
+import streamlit as st
 
 # Componentes reutilizables de UI
-from app.ui.components.forms.form_portafolio import form_portafolio
-from app.ui.components.feedback.alerts import mostrar_error, mostrar_exito
+from app.ui.components.feedback.alerts import (
+    mostrar_error,
+    mostrar_exito,
+)
 
-# Lógica de negocio
-from app.services.portafolios.portafolio_service import crear_portafolio_completo
+# Componentes reutilizables de formularios
+from app.ui.components.forms.form_portafolio import form_portafolio
 
 # Excepciones del dominio
 from app.exceptions import AppError
 
+# Lógica de negocio
+from app.services.portafolios.portafolio_service import (
+    crear_portafolio_completo,
+)
 
-# Punto de entrada de la página
+
 def render():
     """
-    Punto de entrada de la página.
+    Punto de entrada principal de la página.
 
     Esta función:
-    1. Muestra el formulario
-    2. Procesa la acción del usuario
-    3. Llama al backend
-    4. Maneja resultados o errores
+    - Muestra el formulario
+    - Procesa la acción del usuario
+    - Llama al backend para crear el portafolio
+    - Maneja errores y muestra feedback
     """
 
-    # Encabezado de la página
-    st.header("Gestión de Portafolio")
+    # Aplica estilos CSS personalizados
+    _inject_custom_css()
 
-    # 1. Inicialización del estado (Session State)
-
-    # Limpieza (Debe ir antes del formulario)
-    # Se asegura de que todas las llaves existan para evitar KeyErrors
+    # Bandera de control para saber si se ah registrado el portafolio
     if "registrado" not in st.session_state:
         st.session_state["registrado"] = False
 
-    # Si acabamos de registrar, reseteamos los valores ANTES de mostrar el form
+    # Si ya se ha registrado un portafolio, limpiamos el formulario
     if st.session_state["registrado"]:
         limpiar_formulario()
 
-    # ASEGURAR EXISTENCIA (Si es la primera vez que carga la app)
+    # Garantiza que el Session State tenga las claves necesarias
     _asegurar_estado_inicial()
 
-    """
-    2. Renderización de Inputs
+    # Encabezado principal y descripción
+    st.markdown(
+        """
 
-    Se utiliza un componente reutilizable para capturar los datos.
-    Esto evita duplicación de código y mejora mantenibilidad.
-    """
-    nombre, tickers, fecha_inicio, fecha_fin = form_portafolio()
+        ## Gestión de Portafolio
 
-    """
-    3. Botones de Acción
+        <div class="hero-subtitle">
+            Registre portafolios financieros para análisis cuantitativos y
+            comparación de activos.
+        </div>
+        """, unsafe_allow_html=True
+    )
 
-    Botones de acción en columna para mejor UX.
-    st.column permite organizar los botones horizontalmente.
-    """
-    col1, col2 = st.columns([1, 5])
+    # Separador visual
+    st.divider()
 
-    with col1:
-        # Botón de Registro
-        btn_registrar = st.button("Registrar Portafolio", type="secondary")
+    # Diseño de dos columnas: formulario a la izquierda, información a la derecha
+    col_left, col_right = st.columns([2.2, 1])
 
-    with col2:
-        # Botón de Limpieza Manual
-        st.button("Limpiar Formulario", type="primary", on_click=limpiar_formulario)
+    # Formulario principal para configurar el portafolio
+    with col_left:
 
-    """
-    4. Lógica de Negocio / Procesamiento
+        # Contenedor con borde para el formulario
+        with st.container(border=True):
 
-    El botón controla cuándo se ejecuta la lógica.
-    Evita ejecuciones automáticas en cada cambio de input.
-    """
+            # Título y descripción del formulario
+            st.subheader("⚙️ Registro del Portafolio")
+
+            # Descripción breve del formulario
+            st.markdown(
+                """
+                <div class="hero-subsubtitle">
+                    Ingrese los datos necesarios para construir el portafolio
+                    financiero.
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+            # Separador visual
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Formulario reutilizable
+            nombre, tickers, fecha_inicio, fecha_fin = form_portafolio()
+
+            # Separador Visual
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # BOTONES
+            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 2])
+
+            # Botón Registro del Portafolio
+            with btn_col1:
+                btn_registrar = st.button(
+                    "Registrar Portafolio",
+                    use_container_width=True,
+                )
+
+            # Botón LImpiar Formulario
+            with btn_col2:
+                st.button(
+                    "Limpiar Formulario",
+                    use_container_width=True,
+                    on_click=limpiar_formulario,
+                    type="primary"
+                )
+
+    # Panel Lateral de Información
+    with col_right:
+
+        # Contenedor de información para recomendaciones
+        with st.container(border=True):
+            st.subheader("ℹ️ Información")
+            st.markdown(
+                """
+                ### Recomendaciones
+
+                - Utilice activos válidos del mercado.
+                - Separe los tickers por comas.
+                - Evite rangos de fechas pequeños (Mínimo 5 años de diferencia).
+                - Verifique que los activos tengan histórico disponible.
+                """
+            )
+
+        # Separador visual
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Contenedor de ejemplos para los tickets
+        with st.container(border=True):
+            st.subheader("📈 Ejemplo")
+            st.code(
+                "AAPL, MSFT, ECOPETROL, CL=F",
+                language="text"
+            )
+            st.caption(
+                "Formato esperado para los activos/tickers financieros."
+            )
+
+    # Procesamiento (Control de Eventos)
     if btn_registrar:
 
-        # Validación de Formulario
-
-        # Validar que el nombre no esté vacío
+        # Validación básica de formulario
         if not st.session_state.nombre.strip():
-            mostrar_error("El nombre del portafolio es obligatorio.")
+            mostrar_error(
+                "El nombre del portafolio es obligatorio."
+            )
             return
 
-        # Llamada al backend con try/except para manejar errores del dominio
         try:
-            # Spinner para dar feedback visual de que algo está pasando
-            with st.spinner("Procesando y validando activos..."):
-                # Llamada al Backend (Service)
+            # Muestra una animación de carga mientras se ejecuta el proceso
+            with st.spinner(
+                "Validando activos y construyendo portafolio..."
+            ):
+
+                # Llama a la capa de servicio (Lógica de Negocio)
                 crear_portafolio_completo(
                     nombre_portafolio=nombre,
                     tickers_input=tickers,
@@ -103,47 +176,107 @@ def render():
                     fecha_fin=fecha_fin
                 )
 
-            # Si llega aquí, todo salió bien
-            mostrar_exito(f"Portafolio: '{nombre}' creado correctamente")
-            # Marcar que ya se registró
+            # Muestra mensaje de información
+            mostrar_exito(
+                f"Portafolio '{nombre}' creado correctamente."
+            )
+
+            # Cambia el estado para limpiar el formulario.
             st.session_state["registrado"] = True
-            # Rerun para limpiar el formulario
+
+            # Re carga de pagina
             st.rerun()
 
-        # Manejo de Errores del Dominio
+        # Manejo de excepciones
         except AppError as e:
-            # Capturamos cualquier error de nuestro dominio y lo pasamos al diccionario
+
             mostrar_error(e.to_dict())
 
         except Exception as e:
-            # Error técnico no controlado
-            mostrar_error(f"Error crítico del sistema: {str(e)}")
+
+            mostrar_error(
+                f"Error crítico del sistema: {str(e)}"
+            )
 
 
 def _asegurar_estado_inicial():
     """
-    Helper para evitar polución visual en el render.
+    Inicializa el Session State de la vista.
     """
+
     keys_defaults = {
         "nombre": "",
         "tickers": "",
         "fecha_inicio": date(2015, 1, 5),
         "fecha_fin": date(2026, 3, 20)
     }
+
     for key, val in keys_defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
 
 
 def limpiar_formulario():
-    """"
+    """
     Limpia los campos del formulario y resetea el estado.
     """
+
     st.session_state["nombre"] = ""
     st.session_state["tickers"] = ""
     st.session_state["fecha_inicio"] = date(2015, 1, 5)
     st.session_state["fecha_fin"] = date(2026, 3, 20)
     st.session_state["registrado"] = False
-    # Limpiamos también el selector
+
+    # Limpia selectores adicionales si existieron en el flujo
     if "selector_portafolio" in st.session_state:
-        st.session_state["selector_portafolio"] = "Cargar configuración existente..."
+        st.session_state["selector_portafolio"] = (
+            "Cargar configuración existente..."
+        )
+
+
+def _inject_custom_css():
+    """
+    Inyecta estilos personalizados para mejorar la UI.
+    """
+
+    st.markdown(
+        """
+        <style>
+
+        .hero-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subsubtitle {
+            font-sizeL 1.15rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stButton > button {
+            border-radius: 10px;
+            height: 45px;
+            font-weight: 600;
+        }
+
+        div[data-testid="stContainer"] {
+            border-radius: 16px;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )

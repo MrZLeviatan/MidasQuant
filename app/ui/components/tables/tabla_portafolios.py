@@ -51,7 +51,7 @@ def mostrar_tabla_portafolios(data: list[dict]):
     )
 
     # Renderiza la tabla interactiva
-    st.subheader("Portafolios registrados")
+    st.subheader("📂 Portafolios Registrados")
     edited_df = st.data_editor(
         df,
         width="stretch",

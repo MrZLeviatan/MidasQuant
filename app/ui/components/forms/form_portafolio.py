@@ -44,7 +44,7 @@ def form_portafolio():
     )
 
     # Fila de autocompletado (Botón + Combobox)
-    col_btn, col_combo = st.columns([1, 2.5])
+    col_btn, col_combo = st.columns([1.5, 2.5])
 
     # Botón para autocompletar con 20 tickers reales
     with col_btn:

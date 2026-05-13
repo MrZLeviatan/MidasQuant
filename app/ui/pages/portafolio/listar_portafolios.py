@@ -38,8 +38,23 @@ def render():
     4. Muestra mensajes de éxito y error en tiempo real durante el proceso ETL
     """
 
-    # Encabezado de la página
-    st.header("Listado de Portafolios y Proceso ETL")
+    # Aplica estilos CSS personalizados
+    _inject_etl_css()
+
+    # Encabezado de la página y descripción
+    st.markdown(
+        """
+        ## Pipeline ETL de Portafolios
+
+        <div class="hero-subtitle">
+            Seleccione un portafolio financiero y ejecute el proceso
+            de extracción, transformación y carga en tiempo real.
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+    # Divisor visual
+    st.divider()
 
     # Banderas de los procesos y mensajes para el proceso ETL.
 
@@ -60,15 +75,28 @@ def render():
     try:
         # Se obtienes los datos de los Portafolios para las tablas
         data = obtener_resumen_portafolios()
-        # La tabla devuelve el ID y nombre seleccionado por el usuario.
-        id_portafolio, nombre_portafolio = mostrar_tabla_portafolios(data)
+
+        # Borde para la tabla
+        with st.container(border=True):
+
+            # La tabla devuelve el ID y nombre seleccionado por el usuario.
+            id_portafolio, nombre_portafolio = mostrar_tabla_portafolios(data)
+
+        # Separador visual
+        st.markdown("<br>", unsafe_allow_html=True)
 
         # Si el usuario selecciona un Portafolio
         if id_portafolio:
-            # Obtiene los Activos financieros vinculados a ese ID.
-            activos = obtener_activos_de_portafolio(id_portafolio)
-            # Muestra la tabla de Activos
-            mostrar_tabla_activos(activos, nombre_portafolio)
+
+            with st.container(border=True):
+
+                # Obtiene los Activos financieros vinculados a ese ID.
+                activos = obtener_activos_de_portafolio(id_portafolio)
+                # Muestra la tabla de Activos
+                mostrar_tabla_activos(activos, nombre_portafolio)
+
+            # Separador visual
+            st.markdown("<br>", unsafe_allow_html=True)
 
             # BOTÓN ETL
 
@@ -206,7 +234,7 @@ def renderizar_resumen_final():
     placeholder = st.empty()
 
     # Bucle de 10 segundos para el contador regresivo.
-    for i in range(10, 0, -1):
+    for i in range(15, 0, -1):
         with placeholder.container():
             st.success("¡Carga finalizada!")
             st.write(f"⏱ Tiempo: {res['tiempo']}s | ❌ Errores: {res['errores']}")
@@ -216,3 +244,51 @@ def renderizar_resumen_final():
     # Al terminar el contador, limpiamos y recargamos la página
     st.session_state.resumen_final = None
     st.rerun()
+
+
+def _inject_etl_css():
+    """
+    Inyecta estilos personalizados para mejorar la UI.
+    """
+
+    st.markdown(
+        """
+        <style>
+
+        .hero-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subsubtitle {
+            font-sizeL 1.15rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stButton > button {
+            border-radius: 10px;
+            height: 50px;
+            font-weight: 800;
+        }
+
+        div[data-testid="stContainer"] {
+            border-radius: 16px;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
