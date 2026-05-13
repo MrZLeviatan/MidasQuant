@@ -33,6 +33,10 @@ from app.algorithms.similitud.correlacion_pearson import (
     calcular_correlacion_pearson
 )
 
+from app.algorithms.similitud.dtw import (
+    calcular_dtw
+)
+
 
 def obtener_series_comparacion(
     portafolio_id: int,
@@ -231,12 +235,17 @@ def obtener_series_comparacion(
             resultado, ticker_1, ticker_2
         )
 
+        dtw = calcular_metricas_dtw(
+            resultado, ticker_1, ticker_2
+        )
+
         # Retorno Final de mapeo de distintos resultados
         return {
             "series": resultado,
             "metricas": {
                 "distancia_euclidiana": distancia_euclidiana,
-                "correlacion_pearson": correlacion_pearson
+                "correlacion_pearson": correlacion_pearson,
+                "dtw": dtw
             }
         }
 
@@ -301,3 +310,33 @@ def calcular_metricas_pearson(
     )
 
     return correlacion
+
+
+def calcular_metricas_dtw(
+    datos_series: list[dict],
+    ticker_1: str,
+    ticker_2: str
+) -> dict:
+    """
+    Calcula las métricas DTW.
+
+    Complejidad: O(n²)
+    """
+
+    serie_1 = []
+    serie_2 = []
+
+    for fila in datos_series:
+
+        serie_1.append(
+            fila[ticker_1]
+        )
+
+        serie_2.append(
+            fila[ticker_2]
+        )
+
+    return calcular_dtw(
+        serie_1,
+        serie_2
+    )
