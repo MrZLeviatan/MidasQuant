@@ -1,5 +1,5 @@
 """
-Página de comparación de activos financieros (HU11 - HU)
+Página de comparación de activos financieros (HU11 - HU16)
 
 Responsabilidades:
 - Mostrar portafolios con ETL completado.
