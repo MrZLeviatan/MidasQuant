@@ -91,3 +91,33 @@ jobs:
       - name: Run static analysis (Flake8)
         run: |
           venv/bin/flake8 .
+
+        
+      # Testing automatizado:
+
+      # Instalación de herramientas de testing
+      # ----------------------------------------------------------
+      # Instala pytest, framework utilizado para ejecutar las pruebas unitarias del proyecto.
+      #
+      # Pytest permite:
+      # - descubrimiento automático de pruebas
+      # - generación de reportes de errores
+      # - validación automatizada del comportamiento esperado del sistema
+      - name: Install testing tools
+        run: |
+          venv/bin/pip install pytest
+
+
+      # Ejecución de pruebas unitarias
+      # ----------------------------------------------------------
+      # Ejecuta automáticamente todas las pruebas unitarias ubicadas dentro de la carpeta test/.
+      #
+      # Si alguna prueba falla:
+      # - pytest retorna un código de error
+      # - el pipeline se detiene automáticamente
+      # - el Pull Request no podrá aprobarse si existen branch protection rules activas
+      #
+      # Esto garantiza que nuevas modificaciones no rompan funcionalidades previamente implementadas.
+      - name: Run unit tests
+        run: |
+          venv/bin/pytest tests/

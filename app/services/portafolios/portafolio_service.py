@@ -23,6 +23,7 @@ from ...exceptions import (
     MinimoActivosError,
     NombreDuplicadoError,
     RecursoNoEncontradoError,
+    PortafolioSinETLError
 )
 
 # Llamada a los modelos ORM
@@ -368,6 +369,120 @@ def obtener_activos_de_portafolio(portafolio_id: int):
                 "nombre": activo.nombre if is_etl_ready else "",
                 "tipo_activo": activo.tipo_activo if is_etl_ready else "",
                 "mercado": activo.mercado if is_etl_ready else ""
+            })
+
+        # Retorna la lista de Activos asociados al Portafolio
+        return resultado
+
+    # Liberación de la conexión al pool.
+    finally:
+        db.close()
+
+
+def obtener_portafolios_con_etl():
+    """
+    Obtiene únicamente los portafolios que ya ejecutaron ETL.
+
+    Regla de negocio:
+    - Solo pueden compararse portafolios con información enriquecida
+        proveniente del proceso ETL.
+
+    Complejidad: O(n) por recorrido lineal de resultados.
+    """
+
+    # Crear sesión de BD
+    db = SessionLocal()
+
+    try:
+        # Filtra únicamente portafolios con ETL ejecutado.
+        portafolios = db.query(Portafolio).options(
+            # joinedload evita consultas adicionales para configuración.
+            joinedload(Portafolio.configuracion)
+        ).filter(
+            Portafolio.isETL.is_(True)
+        ).all()
+
+        resultado = []
+
+        # Transformación ORM -> Diccionario
+        for p in portafolios:
+
+            # Obtener la configuración asociada al portafolio (fechas, etc.)
+            conf = p.configuracion
+
+            # Agregar la información relevante del portafolio a la lista de resultados.
+            resultado.append({
+                "id": p.id_portafolio,
+                "nombre": p.nombre,
+                "fecha_inicio": conf.fecha_inicio if conf else None,
+                "fecha_fin": conf.fecha_fin if conf else None,
+                "fecha_creacion": p.fecha_creacion
+            })
+
+        # Retorna la lista de portafolios con ETL
+        return resultado
+    # Finalmente, cierra la sesión de base de datos para liberar recursos.
+    finally:
+        db.close()
+
+
+def obtener_activos_comparacion(portafolio_id: int):
+    """
+    Obtiene los activos de un portafolio.
+
+    Reglas de negocio:
+    - El portafolio debe existir.
+    - El portafolio debe haber ejecutado ETL.
+    - Los activos retornan información enriquecida.
+
+    Complejidad: O(n) por iteración de activos.
+    """
+
+    # Crear sesión
+    db = SessionLocal()
+
+    try:
+        # Parsear de String a int (Error raro con el Streamlit)
+        portafolio_id = int(portafolio_id)
+
+        """
+        Consulta única optimizada:
+        - Buscamos el portafolio por ID.
+        - .options(joinedload(...)): Realiza un SQL JOIN para traer la tabla intermedia
+            y los activos finales de una vez, evitando el problema de N+1 consultas.
+        """
+        portafolio = db.query(Portafolio).options(
+            joinedload(Portafolio.activos).joinedload(
+                PortafolioActivo.activo
+            )
+        ).filter(
+            Portafolio.id_portafolio == portafolio_id
+        ).first()
+
+        # Si no se encuentra el portafolio, se lanza una excepción
+        if not portafolio:
+            raise RecursoNoEncontradoError(
+                recurso="Portafolio",
+                identificador=portafolio_id
+            )
+
+        # Validar que el portafolio del Activo si paro por ETL
+        if not portafolio.isETL:
+            raise PortafolioSinETLError(portafolio_id=portafolio_id)
+
+        # Construcción del resultado usando la relación definida en el modelo.
+        resultado = []
+
+        # Iteramos sobre cada activo del portafolio
+        for pa in portafolio.activos:
+
+            activo = pa.activo
+
+            resultado.append({
+                "ticker": activo.ticker,
+                "nombre": activo.nombre,
+                "tipo_activo": activo.tipo_activo,
+                "mercado": activo.mercado
             })
 
         # Retorna la lista de Activos asociados al Portafolio

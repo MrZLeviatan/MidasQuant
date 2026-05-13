@@ -14,7 +14,7 @@ def mostrar_tabla_activos(data: list[dict], nombre_portafolio: str):
     Renderiza la tabla de activos del portafolio seleccionado.
     """
     # Genera un título dinámico que confirma al usuario qué portafolio está consultando.
-    st.subheader("Activos del Portafolio: " + nombre_portafolio)
+    st.subheader("📈 Activos del Portafolio: " + nombre_portafolio)
 
     # Validación básica, si la lista está vacía se detiene la ejecución.
     if not data:

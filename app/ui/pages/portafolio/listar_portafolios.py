@@ -1,3 +1,14 @@
+"""
+Página de listado de Portafolios y proceso ETL. (HU05 - HU09)
+
+Responsabilidades:
+- Mostrar un listado de portafolios con sus activos financieros.
+- Permitir al usuario seleccionar un portafolio para ver sus activos.
+- Iniciar un proceso ETL para el portafolio seleccionado.
+- Mostrar el proceso del ETL en tiempo real con mensajes de éxito y error.
+"""
+
+
 import streamlit as st
 import time
 
@@ -18,32 +29,74 @@ from app.ui.components.feedback.alerts import mostrar_error
 
 def render():
     """
-    Renderiza la pantalla.
-    """
-    st.header("Listado de Portafolios y Proceso ETL")
+    Punto de entrada de la página.
 
-    # Inicialización de Session State (Banderazos)
+    Esta función:
+    1. Muestra el listado de portafolios.
+    2. Permite la selección de un portafolio para mostrar sus activos.
+    3. Proporciona un botón para iniciar el proceso ETL.
+    4. Muestra mensajes de éxito y error en tiempo real durante el proceso ETL
+    """
+
+    # Aplica estilos CSS personalizados
+    _inject_etl_css()
+
+    # Encabezado de la página y descripción
+    st.markdown(
+        """
+        ## Pipeline ETL de Portafolios
+
+        <div class="hero-subtitle">
+            Seleccione un portafolio financiero y ejecute el proceso
+            de extracción, transformación y carga en tiempo real.
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+    # Divisor visual
+    st.divider()
+
+    # Banderas de los procesos y mensajes para el proceso ETL.
+
+    # Si el ETL está corriendo, bloqueamos el botón y mostramos el proceso.
     if "etl_corriendo" not in st.session_state:
         st.session_state.etl_corriendo = False
+
+    # Mostrar los mensajes dinámicos durante el proceso ETL.
     if "mensajes_exito" not in st.session_state:
         st.session_state.mensajes_exito = []
     if "mensajes_error" not in st.session_state:
         st.session_state.mensajes_error = []
+
+    # Resumen final del proceso ETL para mostrar al finalizar con contador.
     if "resumen_final" not in st.session_state:
         st.session_state.resumen_final = None
 
     try:
         # Se obtienes los datos de los Portafolios para las tablas
         data = obtener_resumen_portafolios()
-        # La tabla devuelve el ID y nombre seleccionado por el usuario.
-        id_portafolio, nombre_portafolio = mostrar_tabla_portafolios(data)
+
+        # Borde para la tabla
+        with st.container(border=True):
+
+            # La tabla devuelve el ID y nombre seleccionado por el usuario.
+            id_portafolio, nombre_portafolio = mostrar_tabla_portafolios(data)
+
+        # Separador visual
+        st.markdown("<br>", unsafe_allow_html=True)
 
         # Si el usuario selecciona un Portafolio
         if id_portafolio:
-            # Obtiene los Activos financieros vinculados a ese ID.
-            activos = obtener_activos_de_portafolio(id_portafolio)
-            # Muestra la tabla de Activos
-            mostrar_tabla_activos(activos, nombre_portafolio)
+
+            with st.container(border=True):
+
+                # Obtiene los Activos financieros vinculados a ese ID.
+                activos = obtener_activos_de_portafolio(id_portafolio)
+                # Muestra la tabla de Activos
+                mostrar_tabla_activos(activos, nombre_portafolio)
+
+            # Separador visual
+            st.markdown("<br>", unsafe_allow_html=True)
 
             # BOTÓN ETL
 
@@ -85,6 +138,8 @@ def disparar_etl(id_portafolio):
     """
     Lógica UI para la visualización del proceso ETL.
     """
+
+    # Inicializamos las variables de estado para el proceso ETL
     st.session_state.etl_corriendo = True
     st.session_state.mensajes_exito = []
     st.session_state.mensajes_error = []
@@ -108,8 +163,10 @@ def disparar_etl(id_portafolio):
 
         # Actualizamos la UI visual directamente
         status_text.text(f"Procesando: {evento.get('mensaje')}")
+        # La barra de progreso se actualiza con el valor enviado por el evento
         progress_bar.progress(evento.get("progress", 0.0))
 
+        # Según el tipo de mensaje, lo guardamos en el estado correspondiente
         if tipo in ["info", "success", "success_item"]:
             st.session_state.mensajes_exito.append(msg)
             # Mantenemos solo los últimos 2 mensajes para no saturar la vista.
@@ -177,7 +234,7 @@ def renderizar_resumen_final():
     placeholder = st.empty()
 
     # Bucle de 10 segundos para el contador regresivo.
-    for i in range(10, 0, -1):
+    for i in range(15, 0, -1):
         with placeholder.container():
             st.success("¡Carga finalizada!")
             st.write(f"⏱ Tiempo: {res['tiempo']}s | ❌ Errores: {res['errores']}")
@@ -187,3 +244,51 @@ def renderizar_resumen_final():
     # Al terminar el contador, limpiamos y recargamos la página
     st.session_state.resumen_final = None
     st.rerun()
+
+
+def _inject_etl_css():
+    """
+    Inyecta estilos personalizados para mejorar la UI.
+    """
+
+    st.markdown(
+        """
+        <style>
+
+        .hero-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subsubtitle {
+            font-sizeL 1.15rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stButton > button {
+            border-radius: 10px;
+            height: 50px;
+            font-weight: 800;
+        }
+
+        div[data-testid="stContainer"] {
+            border-radius: 16px;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )

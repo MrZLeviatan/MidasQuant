@@ -10,7 +10,8 @@ from app.exceptions.base_exceptions import (
     AppError,
     BDError,
     DominioError,
-    FuenteError
+    FuenteError,
+    AlgoritmoError
 )
 
 
@@ -21,6 +22,9 @@ from app.exceptions.dominio_exceptions import (
     HorizonteInvalidoError,
     TickerInvalidoError,
     MinimoActivosError,
+    PortafolioSinETLError,
+    InsuficientesDatosComunesError,
+    ObjetoVacio
 )
 
 
@@ -35,6 +39,11 @@ from app.exceptions.fuentes_exceptions import (
     YahooError,
     StooqError,
     ExtraccionFallidaError
+)
+
+# Excepciones relacionadas a los algoritmos
+from app.exceptions.algoritmos_exceptions import (
+    FalloLongitudError
 )
 
 
@@ -56,5 +65,10 @@ __all__ = [
     "StooqError",
     "ExtraccionFallidaError",
     "RecursoNoEncontradoError",
-    "RangoFechaFinError"
+    "RangoFechaFinError",
+    "PortafolioSinETLError",
+    "InsuficientesDatosComunesError",
+    "ObjetoVacio",
+    "AlgoritmoError",
+    "FalloLongitudError"
 ]

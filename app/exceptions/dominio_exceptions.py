@@ -102,3 +102,64 @@ class TickerInvalidoError(DominioError):
         # Guardamos contexto adicional
         self.ticker = ticker
         self.motivo = motivo
+
+
+class PortafolioSinETLError(DominioError):
+    """
+    Excepción lanzada cuando se intenta realizar una operación que requiere
+    un proceso ETL en un portafolio que no lo tiene.
+
+    Regla de negocio:
+    - Un portafolio debe tener un proceso ETL ejecutado para ciertas operaciones.
+    """
+    def __init__(self, portafolio_id: int):
+        detail = {"portafolio_id": portafolio_id}
+
+        super().__init__(
+            message=f"El portafolio con ID {portafolio_id} no posee proceso ETL.",
+            code="PORTAFOLIO_SIN_ETL",
+            detail=detail
+        )
+        # Guardamos contexto adicional
+        self.portafolio_id = portafolio_id
+
+
+class InsuficientesDatosComunesError(DominioError):
+    """
+    Error cuando no hay suficientes puntos de datos coincidentes
+    entre dos o más series temporales.
+
+    Regla de negocio:
+    - Se requieren al menos 2 fechas comunes para realizar cálculos
+        de relación (como correlación o covarianza).
+    """
+    def __init__(self, puntos_encontrados: int, detail: Optional[Any] = None):
+        detail = detail or {"puntos_encontrados": puntos_encontrados}
+
+        super().__init__(
+            message=(
+                "No existen suficientes fechas comunes entre los activos. "
+            ),
+            code="INSUFICIENTES_DATOS_COMUNES",
+            detail=detail
+        )
+        self.puntos_encontrados = puntos_encontrados
+
+
+class ObjetoVacio(DominioError):
+    """
+    Excepción lanzada cuando se encuentra un objeto vacío
+    en un contexto donde se esperaba contenido.
+
+    Regla de negocio:
+    - No se permiten objetos vacíos en ciertas operaciones o contextos.
+    """
+    def __init__(self, objeto_nombre: str, detail: Optional[Any] = None):
+        detail = detail or {"objeto_nombre": objeto_nombre}
+
+        super().__init__(
+            message=f"El objeto '{objeto_nombre}' está vacío.",
+            code="OBJETO_VACIO",
+            detail=detail
+        )
+        self.objeto_nombre = objeto_nombre

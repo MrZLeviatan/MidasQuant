@@ -76,7 +76,6 @@ def test_deteccion_invalidos(dataset_mock):
 
 
 # Verifica la lógica de variación porcentual para detectar saltos bruscos (anomalías).
-# ================================
 def test_deteccion_anomalias(dataset_mock):
     resultado = auditar_calidad_series(dataset_mock)
     serie = resultado["ACTIVO_ANOMALO"]["serie"]
