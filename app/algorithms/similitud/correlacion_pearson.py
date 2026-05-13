@@ -24,7 +24,7 @@ def calcular_correlacion_pearson(
     """
     Calcula la correlación de Pearson entre dos series.
 
-    Complejidad: O(n) - El al
+    Complejidad: O(n) - Itera una vez
     - Espacial: O(1)
     """
 

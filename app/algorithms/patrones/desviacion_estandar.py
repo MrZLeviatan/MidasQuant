@@ -13,26 +13,17 @@ def calcular_desviacion_estandar(valores: List[float]) -> float:
         μ = media de los valores
         xi = cada dato de la serie
     """
-
+    # Captura la cantidad de elementos (n) para promediar y normalizar.
     n = len(valores)
+
+    # Evitar división por 0
     if n == 0:
         return 0.0
 
+    # Suma total dividida entre el número de datos.
     media = sum(valores) / n
 
+    # # Cálculo de la varianza
     varianza = sum((x - media) ** 2 for x in valores) / n
 
     return math.sqrt(varianza)
-
-
-def clasificar_riesgo(desviacion: float) -> str:
-    """
-    Clasifica el activo según su desviación estándar.
-    """
-
-    if desviacion < 1.5:
-        return "Estandar"
-    elif desviacion < 3.0:
-        return "Moderado"
-    else:
-        return "Agresivo"
