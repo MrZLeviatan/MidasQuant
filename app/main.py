@@ -27,6 +27,10 @@ from app.ui.pages.dashboard.dashboard_bursatil_page import (
     render as r_dashboard
 )
 
+from app.ui.pages.inicio_page import (
+    render as r_inicio
+)
+
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
 # reutilizarlo en futuras ejecuciones sin volver a inicializar la base de datos.
@@ -56,7 +60,7 @@ st.title("Proyecto - Análisis de Algoritmos Financieros")
 
 # Diccionario de páginas: clave = nombre visible, valor = función render
 paginas = {
-    "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
+    "Inicio": r_inicio,
     "Registro de Portafolio": r_config_portafolio,
     "Ver Portafolios y ETL": r_listar_portafolios,
     "Comparación de Activos": r_comparacion_activos,
