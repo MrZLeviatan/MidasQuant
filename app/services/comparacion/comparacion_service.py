@@ -29,6 +29,10 @@ from app.algorithms.similitud.distancia_euclidiana import (
     calcular_distancia_euclidiana
 )
 
+from app.algorithms.similitud.correlacion_pearson import (
+    calcular_correlacion_pearson
+)
+
 
 def obtener_series_comparacion(
     portafolio_id: int,
@@ -142,11 +146,13 @@ def obtener_series_comparacion(
         datos_1 = {
             item.fecha: item.close
             for item in serie_1
+            if item.close is not None
         }
 
         datos_2 = {
             item.fecha: item.close
             for item in serie_2
+            if item.close is not None
         }
 
         # Solo compara días donde ambos activos tengan cotización (evita ruidos).
@@ -168,6 +174,12 @@ def obtener_series_comparacion(
         """
         precio_base_1 = datos_1[fechas_comunes[0]]
         precio_base_2 = datos_2[fechas_comunes[0]]
+
+        # Validación de protección para los datos base
+        if precio_base_1 is None or precio_base_2 is None:
+            raise ObjetoVacio(
+                objeto_nombre="precio_base_normalizacion"
+            )
 
         # Construcción de la serie comparativa con precisión financiera de 4 decimales.
         resultado = []
@@ -208,33 +220,84 @@ def obtener_series_comparacion(
                 objeto_nombre="serie_comparativa"
             )
 
-        # Se convierten en vectores numéricos las series temporales
-        vector_1 = [
-            item[ticker_1]
-            for item in resultado
-        ]
-
-        vector_2 = [
-            item[ticker_2]
-            for item in resultado
-        ]
-
         # ALGORITMOS DE SIMILITUD
 
         # Aplicación de la distancia euclidiana
-        distancia_euclidiana = calcular_distancia_euclidiana(
-            vector_1,
-            vector_2
+        distancia_euclidiana = calcular_distanciaec(
+            resultado, ticker_1, ticker_2
+        )
+
+        correlacion_pearson = calcular_metricas_pearson(
+            resultado, ticker_1, ticker_2
         )
 
         # Retorno Final de mapeo de distintos resultados
         return {
             "series": resultado,
             "metricas": {
-                "distancia_euclidiana": distancia_euclidiana
+                "distancia_euclidiana": distancia_euclidiana,
+                "correlacion_pearson": correlacion_pearson
             }
         }
 
     # Cierre de sesión de la BD.
     finally:
         db.close()
+
+
+def calcular_distanciaec(
+        datos_series: list[dict],
+        ticker_1: str,
+        ticker_2: str,
+) -> dict:
+    """
+    Calcular la métrica de la distancia euclidiana.
+
+    Complejidad: O(n)
+    """
+
+    # Se convierten en vectores numéricos las series temporales
+    vector_1 = [
+        item[ticker_1]
+        for item in datos_series
+    ]
+
+    vector_2 = [
+        item[ticker_2]
+        for item in datos_series
+    ]
+
+    # Aplicamos la distancia euclidiana
+    distancia_euclidiana = calcular_distancia_euclidiana(
+        vector_1,
+        vector_2
+    )
+
+    return distancia_euclidiana
+
+
+def calcular_metricas_pearson(
+        datos_series: list[dict],
+        ticker_1: str,
+        ticker_2: str,
+) -> dict:
+    """
+    Calcular la métrica de correlación de Pearson.
+
+    Complejidad: O(n)
+    """
+
+    serie_1 = []
+    serie_2 = []
+
+    for fila in datos_series:
+
+        serie_1.append(fila[ticker_1])
+        serie_2.append(fila[ticker_2])
+
+    correlacion = calcular_correlacion_pearson(
+        serie_1,
+        serie_2
+    )
+
+    return correlacion

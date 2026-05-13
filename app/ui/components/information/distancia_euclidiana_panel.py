@@ -266,9 +266,9 @@ def render_euclidean_similarity_panel(
             """
             Donde:
 
-            - \(x\) representa valores del primer activo.
-            - \(y\) representa valores del segundo activo.
-            - \(n\) representa el número de observaciones.
+            - (x) representa valores del primer activo.
+            - (y) representa valores del segundo activo.
+            - (n) representa el número de observaciones.
             """
         )
 

@@ -38,8 +38,13 @@ from app.ui.components.tables.tabla_activos_comparacion import (
     mostrar_tabla_activos_comparacion
 )
 
+# Paneles de información
 from app.ui.components.information.distancia_euclidiana_panel import (
     render_euclidean_similarity_panel
+)
+
+from app.ui.components.information.correlacion_pearson_panel import (
+    render_pearson_similarity_panel
 )
 
 # Feedback visual
@@ -308,13 +313,22 @@ def render():
                 # MÉTRICAS DE LOS ALGORITMOS
                 algoritmo_tab = st.tabs([
                     "Distancia Euclidiana",
-                    "DTW"
+                    "Correlación de Pearson"
                 ])
 
                 # TABS: Distancia Euclidiana
                 with algoritmo_tab[0]:
 
                     render_euclidean_similarity_panel(
+                        metricas=metricas,
+                        df_series=df_series,
+                        activo_1=activo_1,
+                        activo_2=activo_2
+                    )
+
+                with algoritmo_tab[1]:
+
+                    render_pearson_similarity_panel(
                         metricas=metricas,
                         df_series=df_series,
                         activo_1=activo_1,
