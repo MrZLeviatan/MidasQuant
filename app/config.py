@@ -6,8 +6,16 @@ Objetivos:
         sin cambios en el código de la aplicación.
 """
 
+
 import os
 # Permite acceder a variables de entorno del sistema operativo.
+
+from dotenv import load_dotenv
+# Lectura del .ENV
+
+load_dotenv()
+# Lee el .env en local, en Render usa las vars reales automáticamente
+
 
 # Obtiene la variable de entorno DATABASE_URL si existe.
 # Si no está definida, usa SQLite como base de datos por defecto (desarrollo).

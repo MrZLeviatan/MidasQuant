@@ -26,6 +26,9 @@ if DATABASE_URL.startswith("sqlite:///"):
         os.makedirs(db_dir, exist_ok=True)
 
 
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+
 # El engine es la interfaz principal con la base de datos.
 # Gestiona conexiones y ejecución de SQL.
 engine = create_engine(

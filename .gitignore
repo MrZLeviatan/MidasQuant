@@ -215,3 +215,6 @@ data/processed/
 
 # Omite la base local de SQLite
 data/dev.db
+
+# Omitir el ENV
+.env
