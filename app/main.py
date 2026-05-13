@@ -19,6 +19,10 @@ from app.ui.pages.algoritmos_similitud.comparacion_page import (
     render as r_comparacion_activos
 )
 
+from app.ui.pages.patrones.analisis_patrones_page import (
+    render as r_analisis_patrones
+)
+
 
 # Esta función se ejecuta una sola vez y su resultado se almacena en caché para
 # reutilizarlo en futuras ejecuciones sin volver a inicializar la base de datos.
@@ -51,7 +55,8 @@ paginas = {
     "Inicio": lambda: st.write("Bienvenido al sistema de análisis financiero"),
     "Registro de Portafolio": r_config_portafolio,
     "Ver Portafolios y ETL": r_listar_portafolios,
-    "Comparación de Activos": r_comparacion_activos
+    "Comparación de Activos": r_comparacion_activos,
+    "Análisis de Patrones": r_analisis_patrones
     # Futuras páginas se pueden agregar aquí
 }
 
