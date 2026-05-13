@@ -479,7 +479,6 @@ def obtener_activos_comparacion(portafolio_id: int):
             activo = pa.activo
 
             resultado.append({
-                "id_activo": activo.id_activo,
                 "ticker": activo.ticker,
                 "nombre": activo.nombre,
                 "tipo_activo": activo.tipo_activo,

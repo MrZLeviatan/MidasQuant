@@ -7,7 +7,7 @@ Responsabilidades:
 - Orquestar el análisis comparativo entre activos con diferentes algoritmos.
 """
 
-# Sesión de BD
+# Sesión de bd
 from app.database.connection import SessionLocal
 
 # ORM
@@ -17,11 +17,16 @@ from app.database.models import (
     ConfiguracionAnalisis
 )
 
-# Excepciones
+# Uso de excepciones personalizadas
 from app.exceptions import (
     RecursoNoEncontradoError,
     InsuficientesDatosComunesError,
     ObjetoVacio
+)
+
+# Algoritmos
+from app.algorithms.similitud.distancia_euclidiana import (
+    calcular_distancia_euclidiana
 )
 
 
@@ -203,7 +208,32 @@ def obtener_series_comparacion(
                 objeto_nombre="serie_comparativa"
             )
 
-        return resultado
+        # Se convierten en vectores numéricos las series temporales
+        vector_1 = [
+            item[ticker_1]
+            for item in resultado
+        ]
+
+        vector_2 = [
+            item[ticker_2]
+            for item in resultado
+        ]
+
+        # ALGORITMOS DE SIMILITUD
+
+        # Aplicación de la distancia euclidiana
+        distancia_euclidiana = calcular_distancia_euclidiana(
+            vector_1,
+            vector_2
+        )
+
+        # Retorno Final de mapeo de distintos resultados
+        return {
+            "series": resultado,
+            "metricas": {
+                "distancia_euclidiana": distancia_euclidiana
+            }
+        }
 
     # Cierre de sesión de la BD.
     finally:

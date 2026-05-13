@@ -10,7 +10,8 @@ from app.exceptions.base_exceptions import (
     AppError,
     BDError,
     DominioError,
-    FuenteError
+    FuenteError,
+    AlgoritmoError
 )
 
 
@@ -40,6 +41,11 @@ from app.exceptions.fuentes_exceptions import (
     ExtraccionFallidaError
 )
 
+# Excepciones relacionadas a los algoritmos
+from app.exceptions.algoritmos_exceptions import (
+    FalloLongitudError
+)
+
 
 """
 El __all__ ayuda a que cuando alguien haga 'from app.exceptions import *'
@@ -62,5 +68,7 @@ __all__ = [
     "RangoFechaFinError",
     "PortafolioSinETLError",
     "InsuficientesDatosComunesError",
-    "ObjetoVacio"
+    "ObjetoVacio",
+    "AlgoritmoError",
+    "FalloLongitudError"
 ]

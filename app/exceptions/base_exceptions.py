@@ -95,3 +95,24 @@ class FuenteError(AppError):
             "etapa": self.etapa
         })
         return data
+
+
+class AlgoritmoError(AppError):
+    """
+    Excepción especializada para fallos en la ejecución de algoritmos,
+    procesamiento numérico o lógica computacional.
+    """
+    def __init__(
+        self,
+        algoritmo: str,
+        message: str,
+        code: str = "ALGORITHM_EXECUTION_ERROR",
+        detail: Optional[Any] = None
+    ):
+        # Enriquecemos el detalle para incluir el nombre del algoritmo fallido
+        contexto_detallado = {
+            "algoritmo_nombre": algoritmo,
+            "info_tecnica": detail
+        }
+        super().__init__(message, code, contexto_detallado)
+        self.algoritmo = algoritmo

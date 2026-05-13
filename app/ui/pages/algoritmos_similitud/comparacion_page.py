@@ -1,11 +1,12 @@
 """
-Página de comparación de activos financieros.
+Página de comparación de activos financieros (HU11 - HU)
 
 Responsabilidades:
 - Mostrar portafolios con ETL completado.
 - Permitir seleccionar un portafolio.
 - Permitir seleccionar exactamente 2 activos.
-- Preparar la interacción para algoritmos comparativos.
+- Mostrar gráfica de comparativa entre los 2 activos.
+- Mostrar resultados de análisis de algoritmos de similitud.
 """
 
 # Librería principal UI
@@ -13,6 +14,8 @@ import streamlit as st
 
 # Pandas SOLO en UI
 import pandas as pd
+
+import plotly.express as px
 
 # Servicio comparación
 from app.services.comparacion.comparacion_service import (
@@ -30,8 +33,13 @@ from app.ui.components.tables.tabla_portafolio_comparacion import (
     mostrar_tabla_portafolios_comparacion
 )
 
+# Importación del servicio de comparación
 from app.ui.components.tables.tabla_activos_comparacion import (
     mostrar_tabla_activos_comparacion
+)
+
+from app.ui.components.information.distancia_euclidiana_panel import (
+    render_euclidean_similarity_panel
 )
 
 # Feedback visual
@@ -41,16 +49,30 @@ from app.ui.components.feedback.alerts import mostrar_error
 def render():
     """
     Renderiza la pantalla de comparación de activos financieros.
+
+    Esta función:
+    - Muestra el listado de Portafolios que ya realizaron el ETL.
+    - Permite la selección de un portafolio para mostrar sus activos.
+    - Permite la selección de dos activos para su análisis.
+    - Muestra la gráfica de similitud entre los activos seleccionados.
+    - Muestra el resumen de los algoritmos analizados.
     """
 
-    # CONFIGURACIÓN GENERAL
-    st.title("📈 Comparación de Similitud de Activos")
+    # Aplica estilos CSS personalizados
+    _inject_algoritmos_css()
 
-    st.markdown("""
-    Compare el comportamiento histórico entre dos activos financieros
-    pertenecientes a un mismo portafolio utilizando algoritmos de similitud
-    de series de tiempo.
-    """)
+    # Encabezado de la página y descripción
+    st.markdown(
+        """
+        ## Comparación de Activos Financieros
+
+        <div class="hero-subtitle">
+            Analice similitud y comportamiento histórico entre
+            activos financieros utilizando algoritmo de
+            series temporales.
+        </div>
+        """, unsafe_allow_html=True
+    )
 
     st.divider()
 
@@ -81,49 +103,74 @@ def render():
             )
             return
 
-        # PANEL SUPERIOR DE MÉTRICAS
-        total_portafolios = len(data)
+        # Diseño de dos columnas: formulario a la izquierda, información a la derecha
+        col_left, col_right = st.columns([2.2, 1])
 
-        col1, col2, col3 = st.columns(3)
+        # Tabla de Portafolios con ya proceso ETL
+        with col_left:
 
-        with col1:
-            st.metric(
-                label="Portafolios Disponibles",
-                value=total_portafolios
-            )
+            # Sección Portafolios
+            with st.container(border=True):
 
-        with col2:
-            st.metric(
-                label="Estado ETL",
-                value="Completado"
-            )
+                # Banner principal de la sección
+                st.subheader("📂 Selección de Portafolio")
 
-        with col3:
-            st.metric(
-                label="Activos Comparables",
-                value="2 Máximo"
-            )
+                # Descripción breve
+                st.markdown(
+                    """
+                    <div class="hero-subsubtitle">
+                        Seleccione un portafolio con información enriquecida
+                        mediante ETL para visualizar sus activos financieros.
+                    </div>
+                    """, unsafe_allow_html=True
+                )
 
-        st.divider()
+                id_portafolio, nombre_portafolio = (
+                    mostrar_tabla_portafolios_comparacion(data)
+                )
 
-        # SECCIÓN PORTAFOLIOS
-        with st.container(border=True):
+        # Panel Lateral de Información
+        with col_right:
 
-            st.subheader("📂 Selección de Portafolio")
+            # Contenedor de información para recomendaciones
+            with st.container(border=True):
+                st.subheader("ℹ️ Información")
+                st.markdown(
+                    """
+                    ### Portafolios Disponibles
 
-            st.caption(
-                """
-                Seleccione un portafolio con información enriquecida
-                mediante ETL para visualizar sus activos financieros.
-                """
-            )
+                    En este módulo únicamente se muestran portafolios
+                    que poseen un proceso ETL completado correctamente.
 
-            id_portafolio, nombre_portafolio = (
-                mostrar_tabla_portafolios_comparacion(data)
-            )
+                    #### ¿Cómo habilitar un portafolio?
 
-        # SI EXISTE PORTAFOLIO SELECCIONADO
+                    Para que un portafolio aparezca en esta sección:
+
+                    1. Cree un portafolio financiero.
+                    2. Diríjase al módulo **Ver Portafolios y ETL**.
+                    3. Ejecute el pipeline ETL del portafolio.
+                    4. Espere la finalización del procesamiento.
+                    """
+                )
+
+        # Si existe un portafolio seleccionado
         if id_portafolio:
+
+            # Validaciones de cambio de portafolios
+            if (
+                "ultimo_portafolio" not in st.session_state
+            ):
+
+                st.session_state["ultimo_portafolio"] = None
+
+            # Validación para que no queden guardados los activos seleccionados
+            if (
+                st.session_state["ultimo_portafolio"]
+                != id_portafolio
+            ):
+                st.session_state["activos_seleccionados"] = []
+
+                st.session_state["ultimo_portafolio"] = id_portafolio
 
             st.divider()
 
@@ -132,16 +179,19 @@ def render():
                 id_portafolio
             )
 
-            # PANEL DE ACTIVOS
+            # Panel de los Activos del Portafolio
             with st.container(border=True):
 
                 st.subheader("💹 Selección de Activos")
 
-                st.caption(
+                # Descripción breve
+                st.markdown(
                     """
-                    Seleccione exactamente 2 activos financieros
-                    para ejecutar el análisis comparativo.
-                    """
+                    <div class="hero-subsubtitle">
+                        Seleccione exactamente 2 activos financieros
+                        para ejecutar el análisis comparativo.
+                    </div>
+                    """, unsafe_allow_html=True
                 )
 
                 seleccionados = (
@@ -151,12 +201,12 @@ def render():
                     )
                 )
 
-            # RESUMEN DE SELECCIÓN
+            # Resumen de Sección
             st.divider()
 
             total_seleccionados = len(seleccionados)
 
-            # ESTADO VACÍO
+            # Ningún Activo seleccionado
             if total_seleccionados == 0:
 
                 st.info(
@@ -166,7 +216,7 @@ def render():
                     """
                 )
 
-            # UN SOLO ACTIVO
+            # Un solo activo seleccionado
             elif total_seleccionados == 1:
 
                 st.warning(
@@ -179,41 +229,99 @@ def render():
                     """
                 )
 
-            # DOS ACTIVOS (CORRECTO)
+            # Dos Activos seleccionados (Proceso principal)
             elif total_seleccionados == 2:
 
                 activo_1 = seleccionados[0]
                 activo_2 = seleccionados[1]
 
-                # OBTENER SERIES TEMPORALES
-                series = obtener_series_comparacion(
+                # Obtener la serie de comparación de los dos activos
+                resultados_comparacion = obtener_series_comparacion(
                     id_portafolio,
                     activo_1,
                     activo_2
                 )
 
-                # CONVERTIR A DATAFRAME (SOLO UI)
+                # Extraemos los datos obtenidos para las series
+                series = resultados_comparacion["series"]
+
+                metricas = resultados_comparacion["metricas"]
+
+                # Convertir a DataFrame para la UI
                 df_series = pd.DataFrame(series)
 
-                # GRÁFICA
+                # Gráfica
                 st.subheader(
                     "📈 Comparación de Series Temporales"
                 )
 
-                st.caption(
+                # Descripción breve del proceso
+                st.markdown(
                     """
-                    Las series fueron normalizadas a base 100 para
-                    comparar su comportamiento relativo.
-                    """
+                    <div class="hero-subsubtitle">
+                        Las series temporales fueron normalizadas
+                        utilizando base 100 para comparar
+                        comportamiento relativo y no precios absolutos.
+                    </div>
+                    """, unsafe_allow_html=True
                 )
 
-                st.line_chart(
-                    df_series,
-                    x="fecha",
-                    height=450
+                # Gráfica de similitud propia jsjs
+                with st.container(border=True):
+
+                    fig = px.line(
+                        df_series,
+                        x="fecha",
+                        y=[
+                            activo_1,
+                            activo_2
+                        ],
+                        height=500,
+                        color_discrete_sequence=[
+                            "#3B82F6",
+                            "#B300FF"
+                        ]
+                    )
+
+                    fig.update_layout(
+                        template="plotly_dark",
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        hovermode="x unified",
+                        legend_title="Activos",
+                        xaxis_title="Fecha",
+                        yaxis_title="Valor"
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True
+                    )
+
+                # Separador visual
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                st.subheader(
+                    "📊 Análisis de Diferentes algoritmos de similitud"
                 )
 
-            # MÁS DE DOS
+                # MÉTRICAS DE LOS ALGORITMOS
+                algoritmo_tab = st.tabs([
+                    "Distancia Euclidiana",
+                    "DTW"
+                ])
+
+                # TABS: Distancia Euclidiana
+                with algoritmo_tab[0]:
+
+                    render_euclidean_similarity_panel(
+                        metricas=metricas,
+                        df_series=df_series,
+                        activo_1=activo_1,
+                        activo_2=activo_2
+                    )
+
+            # Más de dos activos seleccionados
             else:
 
                 st.error(
@@ -229,3 +337,51 @@ def render():
         mostrar_error(
             f"Error al cargar el módulo de comparación: {str(e)}"
         )
+
+
+def _inject_algoritmos_css():
+    """
+    Inyecta estilos personalizados para mejorar la UI.
+    """
+
+    st.markdown(
+        """
+        <style>
+
+        .hero-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-subsubtitle {
+            font-sizeL 1.15rem;
+            color: #A0A0A0;
+            margin-bottom: 0.5rem;
+        }
+
+        .stButton > button {
+            border-radius: 10px;
+            height: 50px;
+            font-weight: 800;
+        }
+
+        div[data-testid="stContainer"] {
+            border-radius: 16px;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
