@@ -37,6 +37,10 @@ from app.algorithms.similitud.dtw import (
     calcular_dtw
 )
 
+from app.algorithms.similitud.similitud_coseno import (
+    calcular_similitud_coseno
+)
+
 
 def obtener_series_comparacion(
     portafolio_id: int,
@@ -239,13 +243,18 @@ def obtener_series_comparacion(
             resultado, ticker_1, ticker_2
         )
 
+        similitud_coseno = calcular_metricas_coseno(
+            resultado, ticker_1, ticker_2
+        )
+
         # Retorno Final de mapeo de distintos resultados
         return {
             "series": resultado,
             "metricas": {
                 "distancia_euclidiana": distancia_euclidiana,
                 "correlacion_pearson": correlacion_pearson,
-                "dtw": dtw
+                "dtw": dtw,
+                "similitud_coseno": similitud_coseno
             }
         }
 
@@ -337,6 +346,37 @@ def calcular_metricas_dtw(
         )
 
     return calcular_dtw(
+        serie_1,
+        serie_2
+    )
+
+
+def calcular_metricas_coseno(
+    datos_series: list[dict],
+    ticker_1: str,
+    ticker_2: str,
+) -> dict:
+    """
+    Calcula similitud por coseno.
+
+    Complejidad: O(n)
+    """
+
+    serie_1 = []
+    serie_2 = []
+
+    for fila in datos_series:
+
+        valor_1 = fila.get(ticker_1)
+        valor_2 = fila.get(ticker_2)
+
+        if valor_1 is None or valor_2 is None:
+            continue
+
+        serie_1.append(valor_1)
+        serie_2.append(valor_2)
+
+    return calcular_similitud_coseno(
         serie_1,
         serie_2
     )

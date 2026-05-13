@@ -51,6 +51,10 @@ from app.ui.components.information.dtw_panel import (
     render_dtw_panel
 )
 
+from app.ui.components.information.similitud_coseno_panel import (
+    render_cosine_similarity_panel
+)
+
 # Feedback visual
 from app.ui.components.feedback.alerts import mostrar_error
 
@@ -318,7 +322,8 @@ def render():
                 algoritmo_tab = st.tabs([
                     "Distancia Euclidiana",
                     "Correlación de Pearson",
-                    "Dynamic Time Warping"
+                    "Dynamic Time Warping",
+                    "Similitud por Coseno"
 
                 ])
 
@@ -346,6 +351,16 @@ def render():
                 with algoritmo_tab[2]:
 
                     render_dtw_panel(
+                        metricas=metricas,
+                        df_series=df_series,
+                        activo_1=activo_1,
+                        activo_2=activo_2
+                    )
+
+                # TABS: Coseno
+                with algoritmo_tab[3]:
+
+                    render_cosine_similarity_panel(
                         metricas=metricas,
                         df_series=df_series,
                         activo_1=activo_1,
