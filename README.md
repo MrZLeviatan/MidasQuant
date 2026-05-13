@@ -80,11 +80,7 @@ La documentación formal del proyecto se encuentra organizada y mantenida en Not
 - Especificación de requisitos
 - Especificación casos de uso del sistema
 - Informe general del sistema
-- Prototipo del sistema
-- Plan de pruebas
-- Manual de configuración BD
-- Manual técnico de configuración
-- Manual de usuario
+- Documento de diseño detallado
 
 Enlace a la documentación completa:
 [Documentación Notion](https://midasquant.notion.site/MidasQuant-Proyecto-An-lisis-de-Algoritmos-309b45e6797b80d5919cdbcd0b16217f?source=copy_link)
